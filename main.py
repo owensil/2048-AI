@@ -8,10 +8,14 @@ def main():
 	size = 4
 	brd = Board(size, graphics=0)
 	rand_ag = RandomAgent()
+
 	if interactive == 1:
 		brd.start_interactive()
+
 	while not brd.game_ended:
 		rand_ag.make_choice(brd)
+	# brd.update_graphics()
+	return
 
 
 # brd.update_graphics()

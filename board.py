@@ -9,10 +9,10 @@ from pynput import keyboard
 config = "%(asctime)s [%(levelname)s]:%(name)s - %(message)s"
 logging.basicConfig(format=config, filename='board_log.log', level=logging.DEBUG, filemode="w")
 board_log = logging.getLogger("main")
-board_log.setLevel(logging.DEBUG)
+board_log.setLevel(logging.INFO)
 
 # Can disable logging for perf improvements here
-board_log.disabled = False
+board_log.disabled = True
 
 
 class Board:
@@ -77,33 +77,27 @@ class Board:
 	def _check_end(self) -> None:
 		end = True
 		for i in range(self._size ** 2):
-			if self._board[i] == 0:
-				end = False
+			end = not ((self._board[i] == 0) or (
+					(i + 1) % self._size != 0 and self._board[i] == self._board[i + 1]) or (
+					           i + self._size < self._size ** 2 and self._board[i] == self._board[i + self._size]))
+			if end is False:
 				break
-			elif (i + 1) % self._size != 0 and self._board[i] == self._board[i + 1]:
-				end = False
-				break
-			elif i + self._size < self._size ** 2 and self._board[i] == self._board[i + self._size]:
-				end = False
-				break
+
 		self.game_ended = end
+
+	# if end:
+	# 	board_log.log(logging.INFO, "Game ended")
 
 	def _spawn_piece(self):
 		"""
 		Spawns a piece on the board. A 2 with probability 0.9 and 4 with probability 0.1
 		Returns: None
 		"""
-		# Make random choice between 2 and 4
-		val = np.random.choice([1, 2], p=[0.9, 0.1])
-		# Pick random available square
-		avail = []
-		for x in range(len(self._board)):
-			if self._board[x] == 0:
-				avail.append(x)
-		loc = random.choice(avail)
-		self._board[loc] = val
-		board_log.log(logging.DEBUG, str("Spawned value " + str(2 ** val) + " on grid " + str(loc)))
-		board_log.log(logging.DEBUG, "Current board: " + str(self._board))
+		avail = [x for x in range(len(self._board)) if self._board[x] == 0]
+		self._board[random.choice(avail)] = np.random.choice([1, 2], p=[0.9, 0.1])
+
+	# board_log.log(logging.DEBUG, str("Spawned value " + str(2 ** val) + " on grid " + str(loc)))
+	# board_log.log(logging.DEBUG, "Current board: " + str(self._board))
 
 	def _combiner(self, arange):
 		"""
@@ -115,18 +109,11 @@ class Board:
 
 		"""
 		moved = False
-		prev = None
-		for i in range(len(arange)):
-			# Current square is zero
-			if self._board[arange[i]] == 0:
-				if prev is None:
-					prev = i
-			# Current square is non-zero
-			else:
-				if prev is None:
-					prev = i
+		prev = 0
+		for i in range(1, len(arange)):
+			if self._board[arange[i]] != 0:
 				# Can combine in direction of swipe
-				elif self._board[arange[prev]] == self._board[arange[i]]:
+				if self._board[arange[prev]] == self._board[arange[i]]:
 					self._board[arange[prev]] += 1
 					self._board[arange[i]] = 0
 					prev += 1
@@ -134,19 +121,13 @@ class Board:
 				# Can't combine (or zero)
 				elif self._board[arange[prev]] != self._board[arange[i]]:
 					# Zero
-					if self._board[arange[prev]] == 0:
-						self._board[arange[prev]] = self._board[arange[i]]
-						self._board[arange[i]] = 0
-						moved = True
-					# Can't combine
-					else:
+					if self._board[arange[prev]] != 0:
 						prev += 1
 						if prev == i:
 							continue
-						else:
-							self._board[arange[prev]] = self._board[arange[i]]
-							self._board[arange[i]] = 0
-							moved = True
+					self._board[arange[prev]] = self._board[arange[i]]
+					self._board[arange[i]] = 0
+					moved = True
 		return moved
 
 	def _on_press(self, key):
@@ -211,7 +192,7 @@ class Board:
 		Moves pieces to the right
 		Returns: 0 on success, 1 otherwise
 		"""
-		board_log.log(logging.DEBUG, "Swipe right")
+		# board_log.log(logging.DEBUG, "Swipe right")
 		moved = False
 		for i in range(self._size - 1, self._size ** 2, self._size):
 			arange = range(i, i - self._size, -1)
@@ -229,7 +210,7 @@ class Board:
 		Returns: 0 on success, 1 otherwise
 
 		"""
-		board_log.log(logging.DEBUG, "Swipe up")
+		# board_log.log(logging.DEBUG, "Swipe up")
 		moved = False
 		for i in range(0, self._size, 1):
 			arange = range(i, self._size ** 2, self._size)
@@ -247,7 +228,7 @@ class Board:
 		Returns: 0 on success, 1 otherwise
 
 		"""
-		board_log.log(logging.DEBUG, "Swipe down")
+		# board_log.log(logging.DEBUG, "Swipe down")
 		moved = False
 		for i in range((self._size - 1) * self._size, self._size ** 2, 1):
 			arange = range(i, -1, -self._size)
@@ -281,4 +262,4 @@ class Board:
 		for item in self._win.items[:]:
 			item.undraw()
 		self._draw_board()
-		update(100000)
+		self._win.flush()
