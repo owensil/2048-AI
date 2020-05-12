@@ -30,6 +30,7 @@ class Board:
 		self._size = size
 		self._win_size = None
 		self._win = None
+		self.game_ended = False
 		self._spawn_piece()
 		self._key_listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
 		if graphics == 1:
@@ -99,22 +100,28 @@ class Board:
 					prev = i
 			# Current square is non-zero
 			else:
+				if prev is None:
+					prev = i
 				# Can combine in direction of swipe
-				if self._board[arange[prev]] == self._board[arange[i]]:
+				elif self._board[arange[prev]] == self._board[arange[i]]:
 					self._board[arange[prev]] *= 2
 					self._board[arange[i]] = 0
-					prev = arange[i]
-					moved = True
-				elif self._board[arange[prev]] != self._board[arange[i]]:
 					prev += 1
-				# TODO
-				# NOTE: Need to check for moving to self
-				# Move down
-				elif self._board[arange[prev]] == 0:
-					self._board[arange[prev]] = self._board[arange[i]]
-					self._board[arange[i]] = 0
-					prev = arange[i]
 					moved = True
+				# Can't combine (or zero)
+				elif self._board[arange[prev]] != self._board[arange[i]]:
+					if self._board[arange[prev]] == 0:
+						self._board[arange[prev]] = self._board[arange[i]]
+						self._board[arange[i]] = 0
+						moved = True
+					else:
+						prev += 1
+						if prev == i:
+							continue
+						else:
+							self._board[arange[prev]] = self._board[arange[i]]
+							self._board[arange[i]] = 0
+							moved = True
 		return moved
 
 	def _on_press(self, key):
@@ -166,8 +173,9 @@ class Board:
 		moved = False
 		for i in range(0, self._size ** 2, self._size):
 			arange = range(i, self._size + i)
-			moved = self._combiner(arange)
+			moved = self._combiner(arange) or moved
 		if moved:
+			self._spawn_piece()
 			return 0
 		else:
 			return 1
@@ -180,9 +188,10 @@ class Board:
 		board_log.log(logging.DEBUG, "Swipe right")
 		moved = False
 		for i in range(self._size - 1, self._size ** 2, self._size):
-			arange = range(i, i - self._size + 1, -1)
-			moved = self._combiner(arange)
+			arange = range(i, i - self._size, -1)
+			moved = self._combiner(arange) or moved
 		if moved:
+			self._spawn_piece()
 			return 0
 		else:
 			return 1
@@ -197,8 +206,9 @@ class Board:
 		moved = False
 		for i in range(0, self._size, 1):
 			arange = range(i, self._size ** 2, self._size)
-			moved = self._combiner(arange)
+			moved = self._combiner(arange) or moved
 		if moved:
+			self._spawn_piece()
 			return 0
 		else:
 			return 1
@@ -212,9 +222,10 @@ class Board:
 		board_log.log(logging.DEBUG, "Swipe down")
 		moved = False
 		for i in range((self._size - 1) * self._size, self._size ** 2, 1):
-			arange = range(i, 0, -self._size)
-			moved = self._combiner(arange)
+			arange = range(i, -1, -self._size)
+			moved = self._combiner(arange) or moved
 		if moved:
+			self._spawn_piece()
 			return 0
 		else:
 			return 1
@@ -230,4 +241,4 @@ class Board:
 			for item in self._win.items[:]:
 				item.undraw()
 			self._draw_board()
-			update(30)
+			update(15)
