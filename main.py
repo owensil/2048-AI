@@ -1,23 +1,20 @@
 from board import *
+from random_agent import RandomAgent
 
 
 def main():
 	# Setup
-	interactive = 1
+	interactive = 0
 	size = 4
-	brd = Board(size)
+	brd = Board(size, graphics=0)
+	rand_ag = RandomAgent()
 	if interactive == 1:
 		brd.start_interactive()
+	while not brd.game_ended:
+		rand_ag.make_choice(brd)
 
 
-# print("lef")
-# brd.swipe_left()
-# print('ri')
-# brd.swipe_right()
-# print('up')
-# brd.swipe_up()
-# print('down')
-# brd.swipe_down()
+# brd.update_graphics()
 
 
 if __name__ == "__main__":

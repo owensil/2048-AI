@@ -59,12 +59,34 @@ class Board:
 			vert.draw(self._win)
 		rect.draw(self._win)
 		inside_offset = (self._win_size - 20) / (self._size * 2)
+		# Draw background squares and tile numbers
 		for i in range(0, self._size ** 2, self._size):
 			for j in range(self._size):
+				r = Rectangle(Point(10 + j * scale, 10 + (i // self._size) * scale),
+				              Point(10 + j * scale + 2 * inside_offset,
+				                    10 + (i // self._size) * scale + 2 * inside_offset))
+				r.setFill(color_rgb(self._board[i + j] * 14, 100, 100))
+				r.draw(self._win)
+				if 2 ** self._board[i + j] == 1:
+					continue
 				t = Text(Point(10 + j * scale + inside_offset, 10 + (i // self._size) * scale + inside_offset),
-				         self._board[i + j])
+				         2 ** self._board[i + j])
 				t.setSize(20)
 				t.draw(self._win)
+
+	def _check_end(self) -> None:
+		end = True
+		for i in range(self._size ** 2):
+			if self._board[i] == 0:
+				end = False
+				break
+			elif (i + 1) % self._size != 0 and self._board[i] == self._board[i + 1]:
+				end = False
+				break
+			elif i + self._size < self._size ** 2 and self._board[i] == self._board[i + self._size]:
+				end = False
+				break
+		self.game_ended = end
 
 	def _spawn_piece(self):
 		"""
@@ -72,7 +94,7 @@ class Board:
 		Returns: None
 		"""
 		# Make random choice between 2 and 4
-		val = np.random.choice([2, 4], p=[0.9, 0.1])
+		val = np.random.choice([1, 2], p=[0.9, 0.1])
 		# Pick random available square
 		avail = []
 		for x in range(len(self._board)):
@@ -80,15 +102,16 @@ class Board:
 				avail.append(x)
 		loc = random.choice(avail)
 		self._board[loc] = val
-		board_log.log(logging.DEBUG, str("Spawned value " + str(val) + " on grid " + str(loc)))
+		board_log.log(logging.DEBUG, str("Spawned value " + str(2 ** val) + " on grid " + str(loc)))
+		board_log.log(logging.DEBUG, "Current board: " + str(self._board))
 
 	def _combiner(self, arange):
 		"""
-
+		Combines numbers along range, propagates out from start.
 		Args:
-			arange:
+			arange: Range to combine along
 
-		Returns:
+		Returns: Whether or not any tiles changed position (boolean)
 
 		"""
 		moved = False
@@ -104,16 +127,18 @@ class Board:
 					prev = i
 				# Can combine in direction of swipe
 				elif self._board[arange[prev]] == self._board[arange[i]]:
-					self._board[arange[prev]] *= 2
+					self._board[arange[prev]] += 1
 					self._board[arange[i]] = 0
 					prev += 1
 					moved = True
 				# Can't combine (or zero)
 				elif self._board[arange[prev]] != self._board[arange[i]]:
+					# Zero
 					if self._board[arange[prev]] == 0:
 						self._board[arange[prev]] = self._board[arange[i]]
 						self._board[arange[i]] = 0
 						moved = True
+					# Can't combine
 					else:
 						prev += 1
 						if prev == i:
@@ -176,6 +201,7 @@ class Board:
 			moved = self._combiner(arange) or moved
 		if moved:
 			self._spawn_piece()
+			self._check_end()
 			return 0
 		else:
 			return 1
@@ -192,6 +218,7 @@ class Board:
 			moved = self._combiner(arange) or moved
 		if moved:
 			self._spawn_piece()
+			self._check_end()
 			return 0
 		else:
 			return 1
@@ -209,6 +236,7 @@ class Board:
 			moved = self._combiner(arange) or moved
 		if moved:
 			self._spawn_piece()
+			self._check_end()
 			return 0
 		else:
 			return 1
@@ -226,13 +254,14 @@ class Board:
 			moved = self._combiner(arange) or moved
 		if moved:
 			self._spawn_piece()
+			self._check_end()
 			return 0
 		else:
 			return 1
 
 	def start_interactive(self):
 		"""
-		Starts 2048 in interactive mode
+		Starts 2048 in interactive mode.
 		Returns: Nothing
 		"""
 		# Blocking event listener
@@ -242,3 +271,14 @@ class Board:
 				item.undraw()
 			self._draw_board()
 			update(15)
+
+	def update_graphics(self):
+		"""
+		Used for forcing graphic updates
+		Returns: None
+
+		"""
+		for item in self._win.items[:]:
+			item.undraw()
+		self._draw_board()
+		update(100000)
