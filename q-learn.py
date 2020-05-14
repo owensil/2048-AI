@@ -16,21 +16,21 @@ try:
 	THETA = [keras.models.load_model("tf_model0.h5"), keras.models.load_model("tf_model1.h5"),
 	         keras.models.load_model("tf_model2.h5"), keras.models.load_model("tf_model3.h5")]
 except BaseException as e:
-	print("!======== UNABLE TO LOAD MODELS - CREATING MODELS... ==========!")
+	print("\n\n!======== UNABLE TO LOAD MODELS - CREATING MODELS... ==========!\n\n")
 	model1 = keras.Sequential([
-		keras.layers.Dense(16, activation='relu', input_shape=(16,)),
+		keras.layers.Dense(4, activation='relu', input_shape=(16,)),
 		keras.layers.Dense(1)
 	])
 	model2 = keras.Sequential([
-		keras.layers.Dense(16, activation='relu', input_shape=(16,)),
+		keras.layers.Dense(4, activation='relu', input_shape=(16,)),
 		keras.layers.Dense(1)
 	])
 	model3 = keras.Sequential([
-		keras.layers.Dense(16, activation='relu', input_shape=(16,)),
+		keras.layers.Dense(4, activation='relu', input_shape=(16,)),
 		keras.layers.Dense(1)
 	])
 	model4 = keras.Sequential([
-		keras.layers.Dense(16, activation='relu', input_shape=(16,)),
+		keras.layers.Dense(4, activation='relu', input_shape=(16,)),
 		keras.layers.Dense(1)
 	])
 
@@ -38,8 +38,8 @@ except BaseException as e:
 
 	for model in THETA:
 		model.compile(optimizer='SGD',
-		              loss=tf.keras.losses.Hinge(),
-		              metrics=['accuracy'])
+						loss=tf.keras.losses.Hinge(),
+						metrics=['accuracy'])
 
 
 def is_terminal(state) -> bool:
@@ -225,9 +225,6 @@ def learn_evaluation(state, action, reward, s_prime, s_dprime):
 	THETA[action].fit(tf.convert_to_tensor([state]), tf.convert_to_tensor([reward + v_next]), verbose=0)
 
 
-# THETA[action] = np.interp(THETA[action], (np.min(THETA[action]), np.max(THETA[action])), (-65536, 65536))
-
-
 def get_moves(state):
 	s1 = copy(state)
 	s2 = copy(state)
@@ -246,7 +243,7 @@ def get_moves(state):
 
 
 def play_game():
-	learning_enabled = True
+	learning_enabled = False
 	score = 0
 	# Init
 	state = np.zeros(16)
@@ -274,18 +271,19 @@ def play_game():
 
 
 def main():
-	for x in range(15):
-		try:
-			score = play_game()
-			print("Game: ", x, " Score: ", score)
-			print("THETA: ", THETA)
-		except BaseException as e:
-			print(e)
-			for i in range(len(THETA)):
-				THETA[i].save("tf_model" + str(i) + ".h5")
-			return
-	for i in range(len(THETA)):
-		THETA[i].save("tf_model" + str(i) + ".h5")
+	for y in range(50000):
+		for x in range(5):
+			try:
+				ret_score = play_game()
+				print("Game: ", x, " Score: ", ret_score)
+			except BaseException as e:
+				print(e)
+				for i in range(len(THETA)):
+					THETA[i].save("tf_model" + str(i) + ".h5")
+				return
+		print("Saving model at game "+str(x+y))
+		for i in range(len(THETA)):
+			THETA[i].save("tf_model" + str(i) + ".h5")
 
 
 if __name__ == "__main__":

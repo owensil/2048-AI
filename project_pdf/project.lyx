@@ -1,0 +1,348 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+% For algorithm2e
+\renewcommand{\algorithmcfname}{ALGORITHM}
+\SetAlFnt{\small}
+\SetAlCapFnt{\small}
+\SetAlCapNameFnt{\small}
+\SetAlCapHSkip{0pt}
+\IncMargin{-\parindent}
+\newcommand{\myname}{Owen Siljander}
+%\fxsetup{status=draft}
+
+\title{TBD}
+\author{\myname}
+\end_preamble
+\use_default_options true
+\begin_modules
+algorithm2e
+customHeadersFooters
+fixme
+logicalmkup
+eqs-within-sections
+figs-within-sections
+tabs-within-sections
+theorems-ams-chap-bytype
+theorems-ams-extended-chap-bytype
+\end_modules
+\maintain_unincluded_children false
+\begin_local_layout
+PackageOptions algorithm2e ruled
+\end_local_layout
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1in
+\topmargin 1in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 2
+\papersides 1
+\paperpagestyle fancy
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+maketitle
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Subsection
+Environment
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+2048
+\emph default
+ is a puzzle game that gained popularity among researchers as a useful testing
+ environment for intelligent agent designs.
+ The game consists of a 
+\begin_inset Formula $4\times4$
+\end_inset
+
+ grid starting out with two tiles in random locations with each tile having
+ a value of 
+\begin_inset Formula $2$
+\end_inset
+
+ or 
+\begin_inset Formula $4$
+\end_inset
+
+.
+ The agent has the available moves of up, down, left, or right.
+ Each of these actions will slide the tiles in the appropriate direction.
+ If the tile collides with or moves into another tile of the same value,
+ they combine into a single tile with a value equal to their sum.
+ A tile which has been produced through such a combination cannot combine
+ with another tile within the same move.
+ Each time this occurs, the agent gains points equal to the value of the
+ tile.
+ If a move would not combine or move any tiles on the grid, it is not a
+ legal move.
+ Each time the agent takes an action, a new tile is generated in a random
+ location having a value of 
+\begin_inset Formula $2$
+\end_inset
+
+ with probability 
+\begin_inset Formula $0.9$
+\end_inset
+
+ and a value of 
+\begin_inset Formula $4$
+\end_inset
+
+ with probability 
+\begin_inset Formula $0.1$
+\end_inset
+
+.
+ The game ends when there is no legal move (i.e.
+ cannot move or combine tiles).
+ The stochastic nature of this game is what makes it particularly interesting
+ for applications of model free reinforcement learning such as Q-learning,
+ or in this case, temporal difference learning.
+\end_layout
+
+\begin_layout Subsection
+Related Work
+\end_layout
+
+\begin_layout Standard
+More classical approaches have been taken to create agents for this game,
+ namely Minimax, Expectimax, and Monte-Carlo tree search (MCTS).
+ For instance, 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "rodgers2014investigation"
+literal "false"
+
+\end_inset
+
+ found that averaged depth-limited search (ADLS) and MCTS can exceed average
+ scores of 50,0000 and 120,000 respectively.
+ However, they found that in particular, these agents worked quite well
+ for maintaining high average scores but failed to produce large individual
+ scores.
+ Specifically, an increase in the search limit for ADLS would reduce the
+ number of low-scores, but would also reduce the number of high-scores.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+ used temporal difference learning (TDL) with an N-tuple network to create
+ an agent for this game that performed exceedingly well.
+ In over 97% of plays, the agent reached the 2048 tile and had an average
+ score of 
+\begin_inset Formula $100,178$
+\end_inset
+
+ and a maximum of 
+\begin_inset Formula $261,526$
+\end_inset
+
+.
+ The additional benefit of this technique is that it can make decisions
+ far quicker than the more classical approaches.
+ In particular, 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+ found that both Expectimax and Minimax performed exceedingly slower.
+ The implementation of Expectimax is capable of 6.6 moves per second compared
+ to 330,000 moves per second by TDL.
+ Nonetheless, TDL still suffers from the same issue as the agents in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "rodgers2014investigation"
+literal "false"
+
+\end_inset
+
+, it struggles to reach large scores.
+ This is pointed out in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "yeh2016multistage"
+literal "false"
+
+\end_inset
+
+, which proposes an improvement upon the implementation of TDL by 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+.
+ This extension is called multistage temporal difference learning (MS-TD).
+ The authors equate it to hierarchical reinforcement learning methods.
+ In essence, MS-TD breaks up the training process into three distinct stages,
+ each containing their own weights.
+ The intuition here is that each stage presents a stronger (and different)
+ challenge and isn't as forgiving with the agent's actions as it would be
+ in the early stages.
+ The intuition indeed turned out to be correct, this extension increased
+ the rate at which the agent achieved higher scores.
+ Further improvements were made upon this to reinforce it with expectimax
+ to yield even higher rates of reaching high-valued tiles.
+\end_layout
+
+\begin_layout Subsection
+Objective and Motivation
+\end_layout
+
+\begin_layout Standard
+The amount of research on reinforcement learning is quite scarce, let alone
+ research for TDL.
+\end_layout
+
+\begin_layout Section
+Objective
+\end_layout
+
+\begin_layout Standard
+The objective with this project will be to examine variants upon these existing
+ methods, perhaps with perturbations in the underlying probabilities, to
+ further compare these methods.
+ Specifically, I'm curious how the number of stages in MS-TD affects the
+ performance and if there is some equilibrium in the trade-offs between
+ average scores and max scores.
+ The same metrics will be used to evaluate performance, namely milliseconds
+ per move (or moves per second), highest score, and average score.
+ A higher number of stages pose a serious issue due to memory constraints
+ in modern computers.
+ As such, I'm largely unsure if increasing the number of stages would be
+ at all achievable in this case.
+ This may affect the viability of this approach.
+ 
+\end_layout
+
+\begin_layout Standard
+Hierarchical reinforcement learning serves well to capture overarching goals
+ and patterns.
+ As far as I am aware, multistage temporal difference learning hasn't really
+ been studied or applied to different domains.
+ Performance evaluation would be interesting to study in different domains.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintCited"
+bibfiles "ref"
+options "bibtotoc,plain"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
