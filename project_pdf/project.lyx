@@ -16,7 +16,7 @@
 \newcommand{\myname}{Owen Siljander}
 %\fxsetup{status=draft}
 
-\title{TBD}
+\title{{\huge TDL Value Function Approximations in 2048}}
 \author{\myname}
 \end_preamble
 \use_default_options true
@@ -43,7 +43,7 @@ PackageOptions algorithm2e ruled
 \font_sans "default" "default"
 \font_typewriter "default" "default"
 \font_math "auto" "auto"
-\font_default_family default
+\font_default_family rmdefault
 \use_non_tex_fonts false
 \font_sc false
 \font_osf false
@@ -56,9 +56,10 @@ PackageOptions algorithm2e ruled
 \output_sync 0
 \bibtex_command default
 \index_command default
-\paperfontsize default
+\paperfontsize 12
 \spacing single
 \use_hyperref true
+\pdf_title "TDL Value Function Approximations in 2048"
 \pdf_bookmarks true
 \pdf_bookmarksnumbered false
 \pdf_bookmarksopen false
@@ -106,7 +107,7 @@ PackageOptions algorithm2e ruled
 \math_numbering_side default
 \quotes_style english
 \dynamic_quotes 0
-\papercolumns 2
+\papercolumns 1
 \papersides 1
 \paperpagestyle fancy
 \tracking_changes false
@@ -134,6 +135,91 @@ maketitle
 
 \end_layout
 
+\begin_layout Standard
+\align center
+\begin_inset Flex Noun
+status open
+
+\begin_layout Plain Layout
+University of Minnesota
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Abstract
+\end_layout
+
+\begin_layout Standard
+This paper investigates value function approximations for temporal difference
+ learning in the game 
+\emph on
+2048.
+ 2048
+\emph default
+ is a puzzle game released in 2014 that gained popularity among researchers
+ due to it being a discrete time stochastic environment with a substantial
+ state space.
+ Many classical search approaches have been studied under this environment,
+ as well as reinforcement learning agents, with substantial success over
+ human players.
+ TDL is not normally equipped to handle such a large state space and so
+ this paper investigates linear functions of features and neural networks
+ as value function approximations for TDL.
+ Other solutions, particularly the one this study will closely take after,
+ are 
+\begin_inset Formula $n$
+\end_inset
+
+-tuple networks for value function approximation as in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+The results of this study are mostly inconclusive due to computing and time
+ constraints.
+ Linear functions of features in experiments would often diverge extremely
+ quickly (in less than 10 learning steps) which could either be caused by
+ a poor design in the linear function or indicate that the true value function
+ is not linearly approximable.
+ Experiments with four three-layered non-linear neural networks, with ReLU
+ as an activation function and stochastic gradient descent as an optimizer,
+ were occasionally better than a simple random agent.
+ It is impossible to make a claim about the reason for this due to the insuffici
+ent number of games the networks trained for.
+ There is large room for improvements and experimentation in the application
+ of both these value function approximaters in 
+\emph on
+2048
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Introduction
 \end_layout
@@ -145,11 +231,9 @@ Environment
 \begin_layout Standard
 
 \emph on
-2048
+2048 
 \emph default
- is a puzzle game that gained popularity among researchers as a useful testing
- environment for intelligent agent designs.
- The game consists of a 
+consists of a 
 \begin_inset Formula $4\times4$
 \end_inset
 
@@ -162,15 +246,79 @@ Environment
 \begin_inset Formula $4$
 \end_inset
 
-.
+ (ex.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:2048-starting-state"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+).
+ 
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename img/2048_example_1.png
+	lyxscale 50
+	scale 40
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Example starting state for 
+\emph on
+2048
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:2048-starting-state"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
  The agent has the available moves of up, down, left, or right.
  Each of these actions will slide the tiles in the appropriate direction.
- If the tile collides with or moves into another tile of the same value,
- they combine into a single tile with a value equal to their sum.
+ If a tile collides with or moves into another tile of the same value, they
+ combine into a single tile with a value equal to their sum.
  A tile which has been produced through such a combination cannot combine
- with another tile within the same move.
- Each time this occurs, the agent gains points equal to the value of the
- tile.
+ with another tile within the same move; that is to say, an agent could
+ not combine a row of 
+\begin_inset Formula $2$
+\end_inset
+
+s into a single tile with a value of 
+\begin_inset Formula $8$
+\end_inset
+
+, it would instead produce two tiles of value 
+\begin_inset Formula $4$
+\end_inset
+
+.
  If a move would not combine or move any tiles on the grid, it is not a
  legal move.
  Each time the agent takes an action, a new tile is generated in a random
@@ -193,9 +341,228 @@ Environment
 .
  The game ends when there is no legal move (i.e.
  cannot move or combine tiles).
- The stochastic nature of this game is what makes it particularly interesting
- for applications of model free reinforcement learning such as Q-learning,
- or in this case, temporal difference learning.
+ For every move, the agent receives a reward equal to the value of all tiles
+ which have been combined (e.g.
+ combining two 
+\begin_inset Formula $2$
+\end_inset
+
+ tiles and two 
+\begin_inset Formula $4$
+\end_inset
+
+ tiles results in a reward of 
+\begin_inset Formula $12$
+\end_inset
+
+).
+ The game is considered to be won when the agent has produced a tile with
+ a value of 2048, though the agent can keep playing to achieve higher scores.
+\end_layout
+
+\begin_layout Standard
+The reason this environment is challenging is not only due to the stochastic
+ nature of the game, but also due to the large state space.
+ Considering each tile's value is a power of two, and the maximum possible
+ tile value (in practice) is 
+\begin_inset Formula $2^{17}$
+\end_inset
+
+, there are roughly 
+\begin_inset Formula $18^{16}\approx10^{20}$
+\end_inset
+
+ possible states (a power of 
+\begin_inset Formula $18$
+\end_inset
+
+ to include the zero/empty tile) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+ calculates the number of states to be 
+\begin_inset Formula $16^{18}=4.7\times10^{21}$
+\end_inset
+
+ but I believe this calculation to be erroneous.
+\end_layout
+
+\end_inset
+
+ This state space increases greatly when you consider state-action pairs.
+ This large state space has made sampling algorithms, such as Monte-Carlo
+ tree search (MCTS), particularly attractive solutions.
+\end_layout
+
+\begin_layout Subsection
+Requisite Knowledge
+\end_layout
+
+\begin_layout Standard
+In this paper we focus on the application of temporal difference learning
+ (TDL) in a Markovian decision process (MDP).
+ Temporal difference learning is a particular class of model-free reinforcement
+ learning algorithms that use a value function, which calculates the expected
+ utility of a state, as a means for decision making.
+ By determining the value of potential next states, an agent can use the
+ value function to choose the best action to take.
+ TDL works by continually adjusting its estimated value function, 
+\begin_inset Formula $V^{\pi}(s)$
+\end_inset
+
+, under some policy 
+\begin_inset Formula $\pi$
+\end_inset
+
+.
+ One of the simplest forms, commonly referred to as TD(0) (the 
+\begin_inset Formula $0$
+\end_inset
+
+ denotes a one step look-ahead), in which the value function is updated
+ as follows:
+\begin_inset Formula 
+\[
+V^{\pi}(s)\leftarrow V^{\pi}(s)+\alpha(r+\gamma V^{\pi}(s^{\prime})-V^{\pi}(s))
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\alpha\in[0,1]$
+\end_inset
+
+ is some learning rate, 
+\begin_inset Formula $\gamma$
+\end_inset
+
+ is the discount factor, 
+\begin_inset Formula $s^{\prime}$
+\end_inset
+
+ is the state following an action from 
+\begin_inset Formula $s$
+\end_inset
+
+ under the policy 
+\begin_inset Formula $\pi$
+\end_inset
+
+, and 
+\begin_inset Formula $r$
+\end_inset
+
+ is the reward received from such an action.
+\end_layout
+
+\begin_layout Standard
+This paper uses the formal definition of an MDP as found in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+, it is repeated here for convenience and coherence.
+ An MDP is a tuple 
+\begin_inset Formula $\left\langle S,A,R,P\right\rangle $
+\end_inset
+
+ where
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $S$
+\end_inset
+
+ is a set of possible states
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $A$
+\end_inset
+
+ is a set of actions, 
+\begin_inset Formula $A(s)$
+\end_inset
+
+ denotes the possible actions at state 
+\begin_inset Formula $s$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $R:S\times A\rightarrow\mathbb{R}$
+\end_inset
+
+ is the reward function that maps a state-action pair to real number
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $P:S\times A\times S\rightarrow\mathbb{R}$
+\end_inset
+
+ is a stochastic transition function where 
+\begin_inset Formula $P(s,a,s^{\prime})$
+\end_inset
+
+ denotes the probability of transitioning from state 
+\begin_inset Formula $s$
+\end_inset
+
+ to 
+\begin_inset Formula $s^{\prime}$
+\end_inset
+
+ with an action 
+\begin_inset Formula $a$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+In some cases, it may be possible to express the reward function explicitly,
+ e.g.
+ as a lookup table.
+ In the case of 
+\emph on
+2048
+\emph default
+, the state space makes this solution infeasible.
+ Instead, TDL can be modified to use an approximation of the value function.
+ In some particular cases, it may be more appropriate to enable decision
+ making through a function of state-action pairs (as opposed to just states);
+ this is an extension of TDL known as Q-learning.
+ Q-learning uses a function 
+\begin_inset Formula $Q(s,a):S\times A\rightarrow\mathbb{R}$
+\end_inset
+
+ that can discriminate more accurately against actions.
 \end_layout
 
 \begin_layout Subsection
@@ -230,8 +597,12 @@ literal "false"
 
 \end_inset
 
- used temporal difference learning (TDL) with an N-tuple network to create
- an agent for this game that performed exceedingly well.
+ used temporal difference learning (TDL) with an 
+\begin_inset Formula $n$
+\end_inset
+
+-tuple network to create an agent for this game that performed exceedingly
+ well.
  In over 97% of plays, the agent reached the 2048 tile and had an average
  score of 
 \begin_inset Formula $100,178$
@@ -286,8 +657,8 @@ literal "false"
  In essence, MS-TD breaks up the training process into three distinct stages,
  each containing their own weights.
  The intuition here is that each stage presents a stronger (and different)
- challenge and isn't as forgiving with the agent's actions as it would be
- in the early stages.
+ challenge and is not as forgiving with the agent's actions as it would
+ be in the early stages.
  The intuition indeed turned out to be correct, this extension increased
  the rate at which the agent achieved higher scores.
  Further improvements were made upon this to reinforce it with expectimax
@@ -295,48 +666,453 @@ literal "false"
 \end_layout
 
 \begin_layout Subsection
-Objective and Motivation
+Motivation and Objective
 \end_layout
 
 \begin_layout Standard
-The amount of research on reinforcement learning is quite scarce, let alone
- research for TDL.
+
+\emph on
+2048
+\emph default
+ can be modeled as a Markovian Decision Process (MDP); this is a framework
+ to facilitate decision making in a (discrete) time stochastic environment.
+ The motivation to select TDL for this study is largely arbitrary but is
+ also due to the fact that it is a model-free reinforcement learning solution
+ to decision making in such an environment.
+\end_layout
+
+\begin_layout Standard
+While there is a fair amount of research on reinforcement learning and TDL
+ for 
+\emph on
+2048
+\emph default
+, very few of these studies with TDL appear to discuss ways in which to
+ combat the large state space.
+ TDL is not normally equipped to handle such large state spaces and so this
+ paper focuses on particular technique known as value function approximation.
+ Of the various techniques for this, this paper will consider linear combination
+s of features and neural networks.
+ The main objective for studying these techniques is to discover the efficacy
+ of value function approximations other than the 
+\begin_inset Formula $n$
+\end_inset
+
+-tuple networks used in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Section
-Objective
+Methods
 \end_layout
 
 \begin_layout Standard
-The objective with this project will be to examine variants upon these existing
- methods, perhaps with perturbations in the underlying probabilities, to
- further compare these methods.
- Specifically, I'm curious how the number of stages in MS-TD affects the
- performance and if there is some equilibrium in the trade-offs between
- average scores and max scores.
- The same metrics will be used to evaluate performance, namely milliseconds
- per move (or moves per second), highest score, and average score.
- A higher number of stages pose a serious issue due to memory constraints
- in modern computers.
- As such, I'm largely unsure if increasing the number of stages would be
- at all achievable in this case.
- This may affect the viability of this approach.
+While it is possible to use plain TDL, this paper uses an extension from
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+ that enables TDL to behave quite like Q-learning.
+ Q-learning is a variant upon TDL that considers a state-action value function,
+ as opposed to just a state value function in TDL.
+ This should increase the accuracy in which the value function approximations
+ can classify the expected utility of states.
+ For both variants of the value function approximations, there is a distinct
+ approximater for each action (left, right, up, down) denoted 
+\begin_inset Formula $V_{a}$
+\end_inset
+
+ for the respective action 
+\begin_inset Formula $a\in A$
+\end_inset
+
+.
+ This extension comes from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+; this extension is included in this study to reduce the number of variables
+ which may cause the results to differ, allowing a more direct comparison
+ of results.
+ This extension enables TDL to behave like Q-learning without needing an
+ explicit approximater for a state-action value function.
+\end_layout
+
+\begin_layout Subsection
+Linear Function of Features
+\end_layout
+
+\begin_layout Standard
+In direct similarity to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+, we update the value function approximation according to Algorithm 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "alg:Update-for-Value"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
  
 \end_layout
 
 \begin_layout Standard
-Hierarchical reinforcement learning serves well to capture overarching goals
- and patterns.
- As far as I am aware, multistage temporal difference learning hasn't really
- been studied or applied to different domains.
- Performance evaluation would be interesting to study in different domains.
+\begin_inset Float algorithm
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+SetAlgoLined
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+DontPrintSemicolon
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+SetKwFunction{Fun}{Learn-Evaluation}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Fun{
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula $s,a,r,s',s''$
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}{
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Indp
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula $v_{next}\leftarrow\arg\max_{a^{\prime}\in A(s^{\prime\prime})}V_{a^{\prime}}(s^{\prime\prime})$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula $V_{a}(s)\leftarrow V_{a}(s)+\alpha(r+v_{next}-V_{a}(s))$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Update for Value Function Approximation
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:Update-for-Value"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The state succeeding an action is separated into two distinct states: 
+\begin_inset Formula $s^{\prime}$
+\end_inset
+
+ and 
+\begin_inset Formula $s^{\prime\prime}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $s^{\prime}$
+\end_inset
+
+ denotes the state after an action has taken place but before a tile is
+ randomly generated.
+ 
+\begin_inset Formula $s^{\prime\prime}$
+\end_inset
+
+ denotes the state after an action and a random tile has been generated.
+ This design comes from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+, though it is not utilized here.
+\end_layout
+
+\begin_layout Standard
+The value function approximater takes form as
+\begin_inset Formula 
+\[
+V_{a}(s)=\sum_{i}w_{ai}^{T}f_{i}(s)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\boldsymbol{w}_{a}$
+\end_inset
+
+ is a weight vector for the value function approximater for action 
+\begin_inset Formula $a$
+\end_inset
+
+.
+ The feature vector, 
+\begin_inset Formula $\Phi(s)=\left\langle f_{1}(s),f_{2}(s),\ldots,f_{n}(s)\right\rangle $
+\end_inset
+
+, is simply the value of each game tile (e.g.
+ 
+\begin_inset Formula $f_{1}(s)$
+\end_inset
+
+ would be the value of the first tile).
+ The motivation for selecting this is that a higher weight would be given
+ to high value tiles being held in the corner and in adjacent tiles.
+ That is, keeping large valued tiles outside of a corner or small valued
+ tiles in a corner, would contribute little and would be biased against
+ by the value function approximation.
+ This is a common heuristic used to evaluate the quality of states in search
+ based algorithms.
+\end_layout
+
+\begin_layout Subsection
+Neural Networks
+\end_layout
+
+\begin_layout Standard
+Just like in the previous section, four neural networks are used, one for
+ each possible action.
+ For reasons that will be apparent later, the activation function chosen
+ for the neural network is ReLU.
+ The optimizer is stochastic gradient descent and each network has three
+ layers: a 16 neuron input layer, a middle layer with 4 neurons, and an
+ output layer with one neuron.
+ The choice for the number of neurons in the middle layer comes from two
+ factors: symmetry of the game board, and a common game heuristic.
+ A common strategy for 
+\emph on
+2048
+\emph default
+ is to keep the highest valued tile in a corner.
+ The symmetry of the game board means it does not matter which corner this
+ high valued tile is in.
+ For this reason, four neurons in the middle layer should pick up on an
+ organization of tile values within the four four-tiled corners of the game
+ board.
+ 
+\end_layout
+
+\begin_layout Section
+Results
+\end_layout
+
+\begin_layout Standard
+Results from the experiment were largely inconclusive, and as such, there
+ is very little data worth being presented here.
+ The linear combination of features performed quite poorly and diverged
+ quickly.
+ Several trials were conducted, both with the weight vectors initialized
+ randomly and initialized to zero.
+ In all trials, The functions associated with the left and up moves quickly
+ approached the maximum integer value of 
+\begin_inset Formula $2^{32}$
+\end_inset
+
+ and ended up causing an integer overflow.
+ Interestingly, this type of weighting coincides with a common strategy
+ of keeping the high value tile in a corner; which is achievable by repeatedly
+ moving up and left and occasionally right or down as needed.
+ There is not too much to be claimed about this particular result though
+ it suggests a more clever feature combination may reveal such a strategy
+ is learned by TDL.
+ The reason for inconclusiveness is that it is not guaranteed that the linear
+ combination of features is even able to approximate the true value function
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "kolter2009regularization"
+literal "false"
+
+\end_inset
+
+.
+ It is most probably an erroneous implementation that caused these results
+ to be inconclusive and divergent.
+\end_layout
+
+\begin_layout Standard
+For the neural networks, these performed quite poorly as well but not much
+ can be claimed since the number of games used in training was less than
+ a thousand.
+ ReLU was chosen as the activation function for the neural networks to introduce
+ non-linearity into the function approximation.
+ This was largely motivated by the results for the linear combination of
+ features being quite poor.
+ Training the neural networks adequately would have taken on the order of
+ weeks and was thus not feasible given time constraints.
+ However, testing the neural networks decision making speeds proved somewhat
+ illuminating.
+ In comparison to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "szubert2014temporal"
+literal "false"
+
+\end_inset
+
+, which found a game could be completed in 
+\begin_inset Formula $23$
+\end_inset
+
+ms, the neural networks often took 
+\begin_inset Formula $20+$
+\end_inset
+
+s to finish a single game.
+ Unfortunately, the hardware differences are unknown and thus it is impossible
+ to make a claim about the efficacy of neural networks either.
+\end_layout
+
+\begin_layout Section
+Conclusion and Future Work
+\end_layout
+
+\begin_layout Standard
+The data from experiments was very minimal and not meaningful due to lack
+ of training.
+ Not much can be claimed about the results from the linear functions, despite
+ the experiments running successfully.
+ The same holds true for the implementation of neural networks as function
+ approximaters, though it is difficult to make claims about the efficacy
+ of this solution due to potential hardware differences.
+ 
+\end_layout
+
+\begin_layout Standard
+For future improvements, it would be important to take a closer look at
+ linear function approximaters since the results here suggest something
+ of interest, though it is not concrete.
 \end_layout
 
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
 btprint "btPrintCited"
-bibfiles "ref"
+bibfiles "proj_cites"
 options "bibtotoc,plain"
 
 \end_inset

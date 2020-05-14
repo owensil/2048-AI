@@ -1,6 +1,5 @@
 import random
 from copy import deepcopy, copy
-from datetime import datetime
 from math import inf
 import tensorflow as tf
 from tensorflow import keras
@@ -11,8 +10,9 @@ import numpy as np
 ALPHA = 0.001
 # Size of the gameboard
 SIZE = 4
-# Value vectors used for q-learning
+# Value function approximaters
 try:
+	# Load models from disk if possible
 	THETA = [keras.models.load_model("tf_model0.h5"), keras.models.load_model("tf_model1.h5"),
 	         keras.models.load_model("tf_model2.h5"), keras.models.load_model("tf_model3.h5")]
 except BaseException as e:
@@ -37,9 +37,7 @@ except BaseException as e:
 	THETA = np.array([model1, model2, model3, model4])
 
 	for model in THETA:
-		model.compile(optimizer='SGD',
-						loss=tf.keras.losses.Hinge(),
-						metrics=['accuracy'])
+		model.compile(optimizer='SGD', loss=tf.keras.losses.Hinge(), metrics=['accuracy'])
 
 
 def is_terminal(state) -> bool:
@@ -76,9 +74,9 @@ def combiner(arange, state):
 	Combines numbers along range, propagates out from start. This is a support method for actions. Non-pure function.
 	Args:
 		arange: Range to combine along
-		state: list
+		state: Game state
 
-	Returns: Reward from combining tiles
+	Returns: Tuple of reward and whether or not any tiles moved
 
 	"""
 	prev = 0
@@ -111,7 +109,7 @@ def combiner(arange, state):
 def swipe_left(state):
 	"""
 	Moves pieces to the left. Non-pure function.
-	Returns: reward
+	Returns: Tuple of reward and whether or not any tiles moved
 	"""
 	reward = 0
 	moved = False
@@ -126,7 +124,7 @@ def swipe_left(state):
 def swipe_right(state):
 	"""
 	Moves pieces to the right. Non-pure function.
-	Returns: reward
+	Returns: Tuple of reward and whether or not any tiles moved
 	"""
 	reward = 0
 	moved = False
@@ -141,7 +139,7 @@ def swipe_right(state):
 def swipe_up(state):
 	"""
 	Moves pieces up. Non-pure function.
-	Returns: reward
+	Returns: Tuple of reward and whether or not any tiles moved
 	"""
 	reward = 0
 	moved = False
@@ -156,7 +154,7 @@ def swipe_up(state):
 def swipe_down(state):
 	"""
 	Moves pieces down. Non-pure function.
-	Returns: reward
+	Returns: Tuple of reward and whether or not any tiles moved
 	"""
 	reward = 0
 	moved = False
@@ -170,12 +168,12 @@ def swipe_down(state):
 
 def evaluate(state, action):
 	"""
-	Returns the estimated value of a state
+	Returns the estimated value of a state-action pair
 	Args:
-		state:
-		action:
+		state: Game state
+		action: Action to be taken from the state
 
-	Returns:
+	Returns: Estimated value
 
 	"""
 	# Prediction is nested list
@@ -189,7 +187,8 @@ def compute_afterstate(state, action):
 		state: Game state
 		action: Action to execute (integer)
 
-	Returns: State after executing action and reward gained by action
+	Returns: Tuple of state after executing action and reward gained by action
+
 	"""
 	s_prime = deepcopy(state)
 	if action == 0:
@@ -221,11 +220,31 @@ def make_move(state, action):
 
 
 def learn_evaluation(state, action, reward, s_prime, s_dprime):
+	"""
+	Trains the value approximation function
+	Args:
+		state: Game state
+		action: Action
+		reward: Reward for taking action from state
+		s_prime: State after action but before random tile generation
+		s_dprime: Final state after action
+
+	Returns: None
+
+	"""
 	v_next = np.max([evaluate(s_dprime, i) for i in range(3)])
-	THETA[action].fit(tf.convert_to_tensor([state]), tf.convert_to_tensor([reward + v_next]), verbose=0)
+	THETA[action].fit(tf.convert_to_tensor([s_prime]), tf.convert_to_tensor([reward + v_next]), verbose=0)
 
 
 def get_moves(state):
+	"""
+	Checks which moves are available
+	Args:
+		state: Game state
+
+	Returns: List of legal moves
+
+	"""
 	s1 = copy(state)
 	s2 = copy(state)
 	s3 = copy(state)
@@ -243,7 +262,12 @@ def get_moves(state):
 
 
 def play_game():
-	learning_enabled = False
+	"""
+	Plays the game. Can optionally enable training of the value function approximater
+	Returns: Final score
+
+	"""
+	learning_enabled = True
 	score = 0
 	# Init
 	state = np.zeros(16)
@@ -263,25 +287,39 @@ def play_game():
 		# Make move
 		assert action != -1
 		reward, s_prime, s_dprime = make_move(state, action)
+		# Train value approximater
 		if learning_enabled:
 			learn_evaluation(state, action, reward, s_prime, s_dprime)
 		score += reward
+		# Advance state
 		state = s_dprime
 	return score
 
 
 def main():
-	for y in range(50000):
-		for x in range(5):
-			try:
-				ret_score = play_game()
-				print("Game: ", x, " Score: ", ret_score)
-			except BaseException as e:
-				print(e)
+	"""
+	This setup isn't exact to what was used to generate empirical results. Running this in its current state
+	will take FOREVER (days or weeks).
+	Returns: None
+
+	"""
+	learning = True
+	scores = np.zeros(10000)
+	for x in range(10000):
+		try:
+			ret_score = play_game()
+			print("Game: ", x, " Score: ", ret_score)
+			scores[x] = ret_score
+		except BaseException as er:
+			print(er)
+			if learning:
 				for i in range(len(THETA)):
 					THETA[i].save("tf_model" + str(i) + ".h5")
-				return
-		print("Saving model at game "+str(x+y))
+			return
+	print("Max: ", np.max(scores), " Min: ", np.min(scores), " Avg: ", np.average(scores))
+	print("STDEV: ", np.std(scores), " Median: ", np.median(scores))
+	if learning:
+		# print("Saving model at game "+str(x))
 		for i in range(len(THETA)):
 			THETA[i].save("tf_model" + str(i) + ".h5")
 
