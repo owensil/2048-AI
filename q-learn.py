@@ -1,7 +1,9 @@
 import random
-from copy import deepcopy
+from copy import deepcopy, copy
 from datetime import datetime
 from math import inf
+import tensorflow as tf
+from tensorflow import keras
 
 import numpy as np
 
@@ -10,7 +12,34 @@ ALPHA = 0.001
 # Size of the gameboard
 SIZE = 4
 # Value vectors used for q-learning
-THETA = np.array([np.random.random((16,)), np.random.random((16,)), np.random.random((16,)), np.random.random((16,))])
+try:
+	THETA = [keras.models.load_model("tf_model0.h5"), keras.models.load_model("tf_model1.h5"),
+	         keras.models.load_model("tf_model2.h5"), keras.models.load_model("tf_model3.h5")]
+except BaseException as e:
+	print("!======== UNABLE TO LOAD MODELS - CREATING MODELS... ==========!")
+	model1 = keras.Sequential([
+		keras.layers.Dense(16, activation='relu', input_shape=(16,)),
+		keras.layers.Dense(1)
+	])
+	model2 = keras.Sequential([
+		keras.layers.Dense(16, activation='relu', input_shape=(16,)),
+		keras.layers.Dense(1)
+	])
+	model3 = keras.Sequential([
+		keras.layers.Dense(16, activation='relu', input_shape=(16,)),
+		keras.layers.Dense(1)
+	])
+	model4 = keras.Sequential([
+		keras.layers.Dense(16, activation='relu', input_shape=(16,)),
+		keras.layers.Dense(1)
+	])
+
+	THETA = np.array([model1, model2, model3, model4])
+
+	for model in THETA:
+		model.compile(optimizer='SGD',
+		              loss=tf.keras.losses.Hinge(),
+		              metrics=['accuracy'])
 
 
 def is_terminal(state) -> bool:
@@ -76,10 +105,7 @@ def combiner(arange, state):
 				state[arange[prev]] = cur_val
 				state[arange[i]] = 0
 				moved = True
-	# Penalize moves that don't do anything
-	if not moved:
-		reward -= 1
-	return reward
+	return reward, moved
 
 
 def swipe_left(state):
@@ -91,13 +117,10 @@ def swipe_left(state):
 	moved = False
 	for i in range(0, SIZE ** 2, SIZE):
 		arange = range(i, SIZE + i)
-		r = combiner(arange, state)
-		if r > 0:
-			moved = True
-			reward += r
-	if not moved:
-		return -1
-	return reward
+		r, m = combiner(arange, state)
+		reward += r
+		moved = m or moved
+	return reward, moved
 
 
 def swipe_right(state):
@@ -109,13 +132,10 @@ def swipe_right(state):
 	moved = False
 	for i in range(SIZE - 1, SIZE ** 2, SIZE):
 		arange = range(i, i - SIZE, -1)
-		r = combiner(arange, state)
-		if r > 0:
-			moved = True
-			reward += r
-	if not moved:
-		return -1
-	return reward
+		r, m = combiner(arange, state)
+		reward += r
+		moved = m or moved
+	return reward, moved
 
 
 def swipe_up(state):
@@ -127,13 +147,10 @@ def swipe_up(state):
 	moved = False
 	for i in range(0, SIZE, 1):
 		arange = range(i, SIZE ** 2, SIZE)
-		r = combiner(arange, state)
-		if r > 0:
-			moved = True
-			reward += r
-	if not moved:
-		return -1
-	return reward
+		r, m = combiner(arange, state)
+		reward += r
+		moved = m or moved
+	return reward, moved
 
 
 def swipe_down(state):
@@ -145,13 +162,10 @@ def swipe_down(state):
 	moved = False
 	for i in range((SIZE - 1) * SIZE, SIZE ** 2, 1):
 		arange = range(i, -1, -SIZE)
-		r = combiner(arange, state)
-		if r > 0:
-			moved = True
-			reward += r
-	if not moved:
-		return -1
-	return reward
+		r, m = combiner(arange, state)
+		reward += r
+		moved = m or moved
+	return reward, moved
 
 
 def evaluate(state, action):
@@ -164,10 +178,8 @@ def evaluate(state, action):
 	Returns:
 
 	"""
-	garb, reward = compute_afterstate(state, action)
-	if reward < 0:
-		return -1
-	return np.matmul(THETA[action], state)
+	# Prediction is nested list
+	return THETA[action].predict(tf.convert_to_tensor([state]))[0][0]
 
 
 def compute_afterstate(state, action):
@@ -181,13 +193,13 @@ def compute_afterstate(state, action):
 	"""
 	s_prime = deepcopy(state)
 	if action == 0:
-		reward = swipe_left(s_prime)
+		reward, m = swipe_left(s_prime)
 	elif action == 1:
-		reward = swipe_right(s_prime)
+		reward, m = swipe_right(s_prime)
 	elif action == 2:
-		reward = swipe_up(s_prime)
+		reward, m = swipe_up(s_prime)
 	elif action == 3:
-		reward = swipe_down(s_prime)
+		reward, m = swipe_down(s_prime)
 	else:
 		raise ValueError("Incorrect move")
 	return s_prime, reward
@@ -209,10 +221,28 @@ def make_move(state, action):
 
 
 def learn_evaluation(state, action, reward, s_prime, s_dprime):
-	v_next = np.max([np.matmul(THETA[i], s_dprime) for i in range(3)])
-	temp = np.matmul(THETA[action], state)
-	THETA[action] = temp + ALPHA * (reward + v_next - temp)
-	THETA[action] = np.interp(THETA[action], (np.min(THETA[action]), np.max(THETA[action])), (0, 65536))
+	v_next = np.max([evaluate(s_dprime, i) for i in range(3)])
+	THETA[action].fit(tf.convert_to_tensor([state]), tf.convert_to_tensor([reward + v_next]), verbose=0)
+
+
+# THETA[action] = np.interp(THETA[action], (np.min(THETA[action]), np.max(THETA[action])), (-65536, 65536))
+
+
+def get_moves(state):
+	s1 = copy(state)
+	s2 = copy(state)
+	s3 = copy(state)
+	s4 = copy(state)
+	actions = []
+	if swipe_left(s1)[1] * 1 == 1:
+		actions.append(0)
+	if swipe_right(s2)[1] * 1 == 1:
+		actions.append(1)
+	if swipe_up(s3)[1] * 1 == 1:
+		actions.append(2)
+	if swipe_down(s4)[1] * 1 == 1:
+		actions.append(3)
+	return actions
 
 
 def play_game():
@@ -220,13 +250,15 @@ def play_game():
 	score = 0
 	# Init
 	state = np.zeros(16)
-	spawn_piece(state)
+	state = spawn_piece(state)
 	# While not terminal
 	while not is_terminal(state):
 		# argmax
 		max_val = -inf
 		action = -1
-		for i in range(3):
+		moves = get_moves(state)
+		assert moves != []
+		for i in moves:
 			ret = evaluate(state, i)
 			if ret > max_val:
 				max_val = ret
@@ -242,7 +274,6 @@ def play_game():
 
 
 def main():
-	score = None
 	try:
 		weight_file = open("weight_file.txt", 'a+')
 		dt = datetime.now()
@@ -250,16 +281,21 @@ def main():
 	except IOError as e:
 		print("Failed to open file for weights")
 		return
-	for x in range(1000):
+	for x in range(1):
 		try:
 			score = play_game()
 			print("Game: ", x, " Score: ", score)
+			print("THETA: ", THETA)
 		except BaseException as e:
 			print(e)
-			break
+			for i in range(len(THETA)):
+				THETA[i].save("tf_model" + str(i) + ".h5")
+			return
 	if not weight_file.closed:
 		weight_file.write(str(THETA) + '\n')
 		weight_file.close()
+	for i in range(len(THETA)):
+		THETA[i].save("tf_model" + str(i) + ".h5")
 
 
 if __name__ == "__main__":

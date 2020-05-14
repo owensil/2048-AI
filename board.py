@@ -269,7 +269,7 @@ class Board:
 		v_next = None
 		max = -inf
 		for i in [0, 1, 2, 3]:
-			if
+			pass
 
 	def play_game(self):
 		learning_enabled = True
