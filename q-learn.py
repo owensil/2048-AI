@@ -274,14 +274,7 @@ def play_game():
 
 
 def main():
-	try:
-		weight_file = open("weight_file.txt", 'a+')
-		dt = datetime.now()
-		weight_file.write("Cur time: " + str(dt.microsecond) + "\n")
-	except IOError as e:
-		print("Failed to open file for weights")
-		return
-	for x in range(1):
+	for x in range(15):
 		try:
 			score = play_game()
 			print("Game: ", x, " Score: ", score)
@@ -291,9 +284,6 @@ def main():
 			for i in range(len(THETA)):
 				THETA[i].save("tf_model" + str(i) + ".h5")
 			return
-	if not weight_file.closed:
-		weight_file.write(str(THETA) + '\n')
-		weight_file.close()
 	for i in range(len(THETA)):
 		THETA[i].save("tf_model" + str(i) + ".h5")
 
