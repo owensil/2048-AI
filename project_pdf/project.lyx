@@ -439,7 +439,7 @@ The reason this environment is challenging is not only due to the stochastic
 \begin_inset Formula $18^{16}\approx10^{20}$
 \end_inset
 
- possible states (a power of 
+ possible states (
 \begin_inset Formula $18$
 \end_inset
 
@@ -704,6 +704,13 @@ Because TDL is a model-free algorithm, it isn't necessary for it to have
 
 \begin_layout Section
 Related Work
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Related-Work"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1123,7 +1130,7 @@ literal "false"
 \end_layout
 
 \begin_layout Standard
-The value function approximater takes form as
+The parameterized linear functions take form as
 \begin_inset Formula 
 \begin{equation}
 V_{a}(s)=\sum_{i}w_{ai}^{T}f_{i}(s)=\boldsymbol{w}_{a}^{T}\Phi(s)\label{eq:linear_func}
@@ -1154,14 +1161,14 @@ where
 \end_inset
 
  would be the value of the first tile).
- The motivation for selecting this is that a higher weight would be given
- to high value tiles being held in the corner and in adjacent tiles.
+ The motivation for selecting this is that it should be sufficient to characteri
+ze states according to common heuristics.
+ A higher weight could be given to high value tiles being held in the corner
+ and in adjacent tiles.
  That is, keeping large valued tiles outside of a corner or small valued
  tiles in a corner, would contribute little and would be biased against
  by the value function approximation.
- Keeping high-valued tiles in a corner is a common heuristic used to evaluate
- the quality of states in search based algorithms.
- 
+ This is a common heuristic employed to improve search based agents.
 \end_layout
 
 \begin_layout Standard
@@ -1186,7 +1193,8 @@ literal "false"
 \end_inset
 
 .
- This becomes apparent in the results section.
+ This can lead to issues of converging results; this becomes apparent in
+ the results section.
  There are various mitigations for this issue but including them would make
  the scope of this paper too broad.
 \end_layout
@@ -1205,19 +1213,8 @@ name "subsec:Neural-Networks-meth"
 \begin_layout Standard
 Just like in the previous section, four neural networks are used, one for
  each possible action.
- The activation chosen was ReLU (also called the rectifier), the reasoning
- for this is explained in section 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "subsec:Neural-Networks-res"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
-.
- The rectifier is a function defined to be
+ The activation chosen was ReLU (also called the rectifier), which is defined
+ to be
 \begin_inset Formula 
 \begin{equation}
 f(x)=\max(0,x)\label{eq:relu}
@@ -1230,12 +1227,12 @@ f(x)=\max(0,x)\label{eq:relu}
 \end_inset
 
  is the input to the neuron.
- ReLU also has the advantage of faster computation over other activation
- functions such as 
+ ReLU has the advantage of faster computation over other activation functions
+ such as 
 \begin_inset Formula $\tanh(x)$
 \end_inset
 
-.
+; this is the primary reason for its choice.
  The optimizer is stochastic gradient descent and each network has three
  layers: a 16 neuron input layer, a middle layer with 4 neurons, and an
  output layer with one neuron.
@@ -1263,15 +1260,35 @@ literal "false"
 \end_inset
 
 ), but this falls outside the scope of this study.
- The particular tools used to implement this are models from Keras and GPU
- accelerated learning through CUDA.
+ The particular tools used to implement and train these neural networks
+ are models from Keras and GPU accelerated learning through CUDA.
  Keras is a high-level Python library for artificial intelligence applications
  that abstracts out the necessary, but tedious, computations needed to train
- neural networks.
- CUDA is a developmental toolkit that enables exploitation of the GPU to
- speed up the training of models; Keras is able to take advantage of this
- to speed up the training process.
+ neural networks (i.e.
+ abstracts away needing to compute back propagation).
+ CUDA is a developmental toolkit created by Nvidia that enables the exploitation
+ of the GPU to speed up the training of models; Keras is able to take advantage
+ of this to speed up the training process.
  
+\end_layout
+
+\begin_layout Section
+Approach
+\end_layout
+
+\begin_layout Standard
+This section is largely empty due to inconclusive results (reasons for which
+ are given in the next section).
+ The game environment was built completely from scratch to hold control
+ over performance.
+ The primary metrics for evaluation were going to be milliseconds per game,
+ minimum score, maximum score, average score, and standard deviation of
+ average.
+ These are common metrics in literature.
+ Only three out of these five metrics held any meaning due to the lack of
+ volume of data: milliseconds per game, minimum score, and maximum score.
+ Thus, the results section will focus primarily on why there was a data
+ scarcity and why the linear approximaters failed to converge.
 \end_layout
 
 \begin_layout Section
@@ -1386,7 +1403,6 @@ literal "false"
  In theory, the linear function should have no trouble adjusting itself
  to conform to common heuristics and it would be interesting to discover
  why it didn't.
- 
 \end_layout
 
 \begin_layout Subsection
@@ -1420,9 +1436,14 @@ noprefix "false"
  This was largely motivated by the results for the linear combination of
  features being quite poor.
  If it was indeed the case that the value function was not linearly approximable
-, a non-linear approximation should not be imposed by such characteristics.
+, a non-linear approximation should not be impeded by such characteristics.
  Training the neural networks adequately would have taken on the order of
- weeks and was thus not feasible given the time constraints.
+ weeks and was thus not feasible given the time constraints (assuming training
+ for 
+\begin_inset Formula $\approx100,000+$
+\end_inset
+
+ games).
  However, testing the neural networks decision making speeds proved somewhat
  illuminating.
  In comparison to 
@@ -1482,8 +1503,8 @@ Conclusion and Future Work
 \end_layout
 
 \begin_layout Standard
-The data from experiments was very minimal and not meaningful due to lack
- of training.
+The data from experiments was very minimal and not particularly meaningful
+ due to lack of volume.
  Not much can be claimed about the results from the linear functions, despite
  the experiments running successfully.
  More investigation is needed into the convergence of linear approximations
@@ -1523,13 +1544,36 @@ literal "false"
 
  could be implemented and analyzed to discover particularly why this implementat
 ion failed.
- It is possible that part of the reason for linear functions failing here
- is due to lack of knowledge.
+ It would also be interesting to explore hierarchical solutions similar
+ to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "yeh2016multistage"
+literal "false"
+
+\end_inset
+
+ (see section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Related-Work"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) that use a linear function, assuming the linear function approximaters
+ were discovered to work.
  Admittedly, more advanced techniques could've been chosen to increase the
  probability of convergence of the functions, but it initially didn't seem
  likely that they would fail to converge; hence, improvements upon convergence
  were not initially investigated.
- There are many avenues for experimentation and improvements with neural
+ 
+\end_layout
+
+\begin_layout Standard
+There are many avenues for experimentation and improvements with neural
  networks that time did not permit.
  Perhaps the most obvious among these is fine-tuning the layers of the network
  and choosing the activation function.
