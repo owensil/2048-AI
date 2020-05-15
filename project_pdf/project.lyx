@@ -56,7 +56,7 @@ PackageOptions algorithm2e ruled
 \output_sync 0
 \bibtex_command default
 \index_command default
-\paperfontsize 12
+\paperfontsize 11
 \spacing single
 \use_hyperref true
 \pdf_title "TDL Value Function Approximations in 2048"
@@ -221,7 +221,7 @@ and so this paper investigates linear functions of features and neural networks
 \begin_layout Standard
 The results of this study are mostly inconclusive in part due to computing
  and time constraints.
- The linear functions of features in experiments would often diverge extremely
+ The linear function weight vectors in experiments would often diverge extremely
  quickly (in less than 10 learning steps) which is perhaps caused by the
  poor convergence of linear approximaters in general 
 \begin_inset CommandInset citation
@@ -255,6 +255,13 @@ literal "false"
 .
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Introduction
 \end_layout
@@ -264,9 +271,9 @@ Environment
 \end_layout
 
 \begin_layout Standard
-
+The game
 \emph on
-2048 
+ 2048 
 \emph default
 consists of a 
 \begin_inset Formula $4\times4$
@@ -374,8 +381,7 @@ s into a single tile with a value of
 status collapsed
 
 \begin_layout Plain Layout
-Some research fails to state this property of the game, it may perhaps be
- implied.
+Some research fails to state this property of the game.
 \end_layout
 
 \end_inset
@@ -540,7 +546,7 @@ As for notation,
 \end_inset
 
  is some learning rate, 
-\begin_inset Formula $\gamma$
+\begin_inset Formula $\gamma\in[0,1]$
 \end_inset
 
  is the discount factor, 
@@ -599,8 +605,7 @@ Bellman's equation indicates that the value for a particular state under
 
  is given by the state reward plus the discounted expected value of all
  possible subsequent states.
- Hence, convergence of such an approximation is not guaranteed and this
- becomes apparent in the results section.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -692,7 +697,9 @@ Because TDL is a model-free algorithm, it isn't necessary for it to have
 \begin_inset Formula $Q(s,a):S\times A\rightarrow\mathbb{R}$
 \end_inset
 
- that can discriminate more accurately against actions.
+ instead of simply a state value function.
+ A further discussion on Q-learning isn't necessary as an understanding
+ of the approach in this study only requires knowledge of TDL.
 \end_layout
 
 \begin_layout Section
@@ -731,8 +738,13 @@ literal "false"
 \begin_inset Formula $n$
 \end_inset
 
--tuple network to create an agent for this game that performed exceedingly
- well.
+-tuple network (the 
+\begin_inset Formula $n$
+\end_inset
+
+-tuple network allows approximation of the state value function much like
+ parameterized linear functions) to create an agent for this game that performed
+ exceedingly well.
  In over 97% of plays, the agent reached the 2048 tile and had an average
  score of 
 \begin_inset Formula $100,178$
@@ -821,6 +833,7 @@ literal "false"
 \end_inset
 
 .
+ However, these tend to pale in a performance comparison to TDL methods.
  
 \end_layout
 
@@ -838,6 +851,8 @@ Motivation and Objective
  The motivation to select TDL for this study is largely arbitrary but is
  also due to the fact that it is a model-free reinforcement learning solution
  to decision making in such an environment.
+ This allows the agent to not need a priori knowledge of the transition
+ and reward function.
 \end_layout
 
 \begin_layout Standard
@@ -889,7 +904,7 @@ literal "false"
  Q-learning is a variant upon TDL that considers a state-action value function,
  as opposed to just a state value function in TDL.
  This should increase the accuracy in which the value function approximations
- can classify the expected utility of states.
+ can determine the expected utility of states.
  For both variants of the value function approximations, there is a distinct
  approximater for each action, denoted 
 \begin_inset Formula $V_{a}$
@@ -910,8 +925,6 @@ literal "false"
 
  and is included in this study to reduce the number of variables which may
  cause the results to differ, allowing a more direct comparison of results.
- This extension enables TDL to behave like Q-learning without needing an
- explicit approximater for a state-action value function.
 \end_layout
 
 \begin_layout Subsection
@@ -1148,7 +1161,11 @@ where
  by the value function approximation.
  Keeping high-valued tiles in a corner is a common heuristic used to evaluate
  the quality of states in search based algorithms.
- It's important to note that while the value function satisfies Bellman's
+ 
+\end_layout
+
+\begin_layout Standard
+It's important to note that while the value function satisfies Bellman's
  equation (Equation 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -1169,22 +1186,62 @@ literal "false"
 \end_inset
 
 .
+ This becomes apparent in the results section.
+ There are various mitigations for this issue but including them would make
+ the scope of this paper too broad.
 \end_layout
 
 \begin_layout Subsection
 Neural Networks
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Neural-Networks-meth"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 Just like in the previous section, four neural networks are used, one for
  each possible action.
- For reasons that will be apparent later, the activation function chosen
- for the neural network is ReLU.
+ The activation chosen was ReLU (also called the rectifier), the reasoning
+ for this is explained in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Neural-Networks-res"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ The rectifier is a function defined to be
+\begin_inset Formula 
+\begin{equation}
+f(x)=\max(0,x)\label{eq:relu}
+\end{equation}
+
+\end_inset
+
+ where 
+\begin_inset Formula $x$
+\end_inset
+
+ is the input to the neuron.
+ ReLU also has the advantage of faster computation over other activation
+ functions such as 
+\begin_inset Formula $\tanh(x)$
+\end_inset
+
+.
  The optimizer is stochastic gradient descent and each network has three
  layers: a 16 neuron input layer, a middle layer with 4 neurons, and an
  output layer with one neuron.
  The choice for the number of neurons in the middle layer comes from two
- factors: symmetry of the game board, and a common game heuristic.
+ factors: symmetry of the game board, and a the heuristic mentioned in the
+ previous section.
  A common strategy for 
 \emph on
 2048
@@ -1195,6 +1252,25 @@ Just like in the previous section, four neural networks are used, one for
  For this reason, four neurons in the middle layer should pick up on an
  organization of tile values within the four four-tiled corners of the game
  board.
+ Most of these decisions are based upon intuition and there are techniques
+ for designing neural networks (e.g.
+ as in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bose1993neural"
+literal "false"
+
+\end_inset
+
+), but this falls outside the scope of this study.
+ The particular tools used to implement this are models from Keras and GPU
+ accelerated learning through CUDA.
+ Keras is a high-level Python library for artificial intelligence applications
+ that abstracts out the necessary, but tedious, computations needed to train
+ neural networks.
+ CUDA is a developmental toolkit that enables exploitation of the GPU to
+ speed up the training of models; Keras is able to take advantage of this
+ to speed up the training process.
  
 \end_layout
 
@@ -1207,7 +1283,7 @@ Results from the experiment were largely inconclusive, and as such, there
  is very little data worth being presented here.
  The information collected from the linear function approximater yielded
  inconclusive results due to the nature of the data.
- The results for neural networks are inconclusive due to the insufficient
+ The results for neural networks are mostly inconclusive due to the insufficient
  number of training examples (the reasoning for insufficient training is
  discussed later).
  The reasons for such failures and inconclusiveness is nonetheless still
@@ -1222,7 +1298,7 @@ Linear Functions of Features
 The linear combination of features performed quite poorly and diverged quickly.
  Multiple trials were conducted, both with the weight vectors initialized
  randomly and initialized to zero.
- In all trials, The functions associated with the 
+ In all trials, the weight vectors associated with the 
 \emph on
 left
 \emph default
@@ -1230,10 +1306,11 @@ left
 \emph on
 up
 \emph default
- moves quickly approached the maximum integer value.
- Interestingly, this type of weighting coincides with a common strategy
- of keeping the high value tile in a corner; which is achievable by repeatedly
- moving 
+ moves quickly approached the maximum integer value and the other two weight
+ vectors either stayed at zero or were some incoherent collection of numbers.
+ Interestingly, this type of weighting roughly coincides with the common
+ strategy of keeping the high value tile in a corner; which is achievable
+ by repeatedly moving 
 \emph on
 up
 \emph default
@@ -1255,7 +1332,8 @@ as needed.
  is learned by TDL.
  The reason for inconclusiveness is that it is not guaranteed that the linear
  combination of features is even able to approximate the true value function
- 
+ since linear approximations cannot be guaranteed to satisfy the Bellman
+ equation 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "kolter2009regularization"
@@ -1263,8 +1341,7 @@ literal "false"
 
 \end_inset
 
- since linear approximations cannot be guaranteed to satisfy the Bellman
- equation.
+.
  This characteristic of linear approximations such as in Q-learning is also
  pointed out in 
 \begin_inset CommandInset citation
@@ -1275,6 +1352,15 @@ literal "false"
 \end_inset
 
 .
+ The main reason for this is that if we consider that the value function
+ takes the form of 
+\begin_inset Formula $\boldsymbol{w}^{T}\Phi(s)$
+\end_inset
+
+, it is entirely possible that the set of basis functions chosen for the
+ agent do not span the optimal solution (i.e.
+ a dimension mismatch); thus, it's impossible for the estimation to approximate
+ it.
  Unfortunately, this discovery was made after the experiment was completed
  and time did not permit exploration of solutions for this.
  Both 
@@ -1298,12 +1384,20 @@ literal "false"
  Thus, nothing of import can really be ascertained from the results of this
  experiment.
  In theory, the linear function should have no trouble adjusting itself
- to conform to common heuristics.
+ to conform to common heuristics and it would be interesting to discover
+ why it didn't.
  
 \end_layout
 
 \begin_layout Subsection
 Neural Networks
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Neural-Networks-res"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1311,11 +1405,24 @@ For the neural networks, these performed quite poorly as well but not much
  can be claimed since the number of games used in training was less than
  a thousand.
  ReLU was chosen as the activation function for the neural networks to introduce
- non-linearity into the function approximation.
+ non-linearity into the function approximation (in addition to the reasons
+ given in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Neural-Networks-meth"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+).
  This was largely motivated by the results for the linear combination of
  features being quite poor.
+ If it was indeed the case that the value function was not linearly approximable
+, a non-linear approximation should not be imposed by such characteristics.
  Training the neural networks adequately would have taken on the order of
- weeks and was thus not feasible given time constraints.
+ weeks and was thus not feasible given the time constraints.
  However, testing the neural networks decision making speeds proved somewhat
  illuminating.
  In comparison to 
@@ -1334,7 +1441,8 @@ ms, the neural networks often took
 \begin_inset Formula $20+$
 \end_inset
 
-s to finish a single game.
+s to finish a single game (a more accurate comparison should include the
+ scores achieved in the time frame but such data isn't available).
  Unfortunately, the hardware differences are unknown and thus it is impossible
  to make a claim about the efficacy of neural networks either.
  Nonetheless, even such a small training sample still enabled the agent
@@ -1343,7 +1451,11 @@ s to finish a single game.
 \end_inset
 
 , an improvement over random agents which have been shown to never reach
- the 256 tile 
+ the 256 tile (a score of around 
+\begin_inset Formula $2,000$
+\end_inset
+
+) 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "dedieu2017deep"
@@ -1362,7 +1474,7 @@ Of course, given enough trials, a random agent would eventually reach such
 
 \end_inset
 
-
+ 
 \end_layout
 
 \begin_layout Section
@@ -1374,11 +1486,24 @@ The data from experiments was very minimal and not meaningful due to lack
  of training.
  Not much can be claimed about the results from the linear functions, despite
  the experiments running successfully.
- The same holds true for the implementation of neural networks as function
- approximaters, though it is difficult to make claims about the efficacy
- of this solution due to potential hardware differences.
- The neural networks as an approximater nonetheless still achieved better
- results than a random agent.
+ More investigation is needed into the convergence of linear approximations
+ to make a claim about their viability as a value function approximator
+ for 
+\emph on
+2048.
+ 
+\end_layout
+
+\begin_layout Standard
+The same holds mostly true for the implementation of neural networks as
+ function approximaters, though it is difficult to make claims about the
+ efficacy of this solution in comparison to other results due to potential
+ hardware differences.
+ One semi-conclusive fact is that a neural networks decision making speed
+ is comparable to that of classical approaches.
+ However, more testing would be needed to declare confidence in this result.
+ The neural networks as an approximater nonetheless still achieved a higher
+ maximum score than a random agent.
  This particularly motivates interest into non-linear functions for approximatin
 g the value function.
 \end_layout
@@ -1398,8 +1523,14 @@ literal "false"
 
  could be implemented and analyzed to discover particularly why this implementat
 ion failed.
- There are many avenues for experimentation with neural networks that time
- did not permit.
+ It is possible that part of the reason for linear functions failing here
+ is due to lack of knowledge.
+ Admittedly, more advanced techniques could've been chosen to increase the
+ probability of convergence of the functions, but it initially didn't seem
+ likely that they would fail to converge; hence, improvements upon convergence
+ were not initially investigated.
+ There are many avenues for experimentation and improvements with neural
+ networks that time did not permit.
  Perhaps the most obvious among these is fine-tuning the layers of the network
  and choosing the activation function.
  It's also possible to use just a single network with an additional input
