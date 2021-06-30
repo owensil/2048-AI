@@ -9,7 +9,7 @@ def main():
     # Setup
     interactive = 0
     size = 4
-    brd = Board(size, graphics=0)
+    brd = Board(size)
     rand_ag = RandomAgent()
 
     if interactive == 1:
