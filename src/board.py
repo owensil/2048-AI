@@ -8,19 +8,20 @@ import numpy as np
 class Board:
     def __init__(self, size=4):
         """
-        Initialzier for 2048 game board
+        Initializer for 2048 game board
         Args:
             size: Integer size of the board, must be greater than 0. Size represents the square size
                 (e.g. 8 would be a chessboard). Default size is 4.
         """
-        if size == 0:
-            raise ValueError("Board size can't be zero")
+        if size <= 0:
+            raise ValueError("Board size must be positive")
             return
         random.seed(None)
         self._board = np.zeros(size ** 2, int)
-        self._board_size = size
+        self._size = size
         self._game_ended = False
         self._score = 0
+        # TODO: These two vars need to be removed
         self._learning_rate = 0.001
         self._epsilon = 0.1
         self._spawn_piece()
@@ -29,15 +30,15 @@ class Board:
         """
         Spawns a piece on the board. A 2 with probability 0.9 and 4 with probability 0.1
         """
-        direction = range(len(self._board))
-        avail = [x for x in direction if self._board[x] == 0]
+        avail = [x for x in range(len(self._board)) if self._board[x] == 0]
         self._board[random.choice(avail)] = np.random.choice([1, 2], p=[0.9, 0.1])
 
     # TODO below
 
     def _combiner(self, arange):
         """
-        Combines numbers along range, propagates out from start. This is a support method for actions
+        Combines numbers along range, propagates out from start. This is a support method for actions. Action functions
+        input a "custom range" (e.g. 0,4,8,12 would be a vertical range) and this function combines along it.
         Args:
             arange: Range to combine along
 
@@ -66,14 +67,14 @@ class Board:
                     moved = True
         return moved
 
-    def _swipe_left(self, ) -> bool:
+    def _swipe_left(self) -> bool:
         """
         Moves pieces to the left
         Returns: 0 on success, 1 otherwise
         """
         moved = False
-        for i in range(0, SIZE ** 2, SIZE):
-            arange = range(i, SIZE + i)
+        for i in range(0, self._size ** 2, self._size):
+            arange = range(i, self._size + i)
             moved = self._combiner(arange) or moved
         return moved
 
@@ -83,8 +84,8 @@ class Board:
         Returns: 0 on success, 1 otherwise
         """
         moved = False
-        for i in range(SIZE - 1, SIZE ** 2, SIZE):
-            arange = range(i, i - SIZE, -1)
+        for i in range(self._size - 1, self._size ** 2, self._size):
+            arange = range(i, i - self._size, -1)
             moved = self._combiner(arange) or moved
         return moved
 
@@ -95,8 +96,8 @@ class Board:
 
         """
         moved = False
-        for i in range(0, SIZE, 1):
-            arange = range(i, SIZE ** 2, SIZE)
+        for i in range(0, self._size, 1):
+            arange = range(i, self._size ** 2, self._size)
             moved = self._combiner(arange) or moved
         return moved
 
@@ -107,8 +108,8 @@ class Board:
 
         """
         moved = False
-        for i in range((SIZE - 1) * SIZE, SIZE ** 2, 1):
-            arange = range(i, -1, -SIZE)
+        for i in range((self._size - 1) * self._size, self._size ** 2, 1):
+            arange = range(i, -1, -self._size)
             moved = self._combiner(arange) or moved
         return moved
 
@@ -118,16 +119,16 @@ class Board:
         Returns: bool
         """
         end = True
-        for i in range(SIZE ** 2):
+        for i in range(self._size ** 2):
             end = not ((self._board[i] == 0) or (
-                    (i + 1) % SIZE != 0 and self._board[i] == self._board[i + 1]) or (
-                               i + SIZE < SIZE ** 2 and self._board[i] == self._board[i + SIZE]))
+                    (i + 1) % self._size != 0 and self._board[i] == self._board[i + 1]) or (
+                               i + self._size < self._size ** 2 and self._board[i] == self._board[i + self._size]))
             if end is False:
                 break
         return end
 
     def reset(self):
-        self._board = np.zeros((SIZE, SIZE))
+        self._board = np.zeros((self._size, self._size))
         self.score = 0
         self._spawn_piece()
 
