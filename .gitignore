@@ -4,7 +4,6 @@
 *~
 *.lyx#
 *.lyx~
-2048env
 docs/
 
 # Byte-compiled / optimized / DLL files

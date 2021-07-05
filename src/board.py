@@ -1,6 +1,4 @@
 import random
-from copy import deepcopy
-from math import inf
 
 import numpy as np
 
@@ -62,7 +60,7 @@ class Board:
                     moved = True
         return moved
 
-    def _swipe_left(self) -> bool:
+    def swipe_left(self) -> bool:
         """
         Moves pieces to the left
         Returns: 0 on success, 1 otherwise
@@ -71,9 +69,11 @@ class Board:
         for i in range(0, self._size ** 2, self._size):
             block = range(i, self._size + i)
             moved = self._combiner(block) or moved
+        if moved:
+            self._spawn_piece()
         return moved
 
-    def _swipe_right(self) -> bool:
+    def swipe_right(self) -> bool:
         """
         Moves pieces to the right
         Returns: 0 on success, 1 otherwise
@@ -82,9 +82,11 @@ class Board:
         for i in range(self._size - 1, self._size ** 2, self._size):
             block = range(i, i - self._size, -1)
             moved = self._combiner(block) or moved
+        if moved:
+            self._spawn_piece()
         return moved
 
-    def _swipe_up(self) -> bool:
+    def swipe_up(self) -> bool:
         """
         Moves pieces up
         Returns: 0 on success, 1 otherwise
@@ -94,9 +96,11 @@ class Board:
         for i in range(0, self._size, 1):
             block = range(i, self._size ** 2, self._size)
             moved = self._combiner(block) or moved
+        if moved:
+            self._spawn_piece()
         return moved
 
-    def _swipe_down(self) -> bool:
+    def swipe_down(self) -> bool:
         """
         Moves pieces down
         Returns: 0 on success, 1 otherwise
@@ -106,6 +110,8 @@ class Board:
         for i in range((self._size - 1) * self._size, self._size ** 2, 1):
             block = range(i, -1, -self._size)
             moved = self._combiner(block) or moved
+        if moved:
+            self._spawn_piece()
         return moved
 
     def is_terminal(self) -> bool:
@@ -130,10 +136,23 @@ class Board:
         self._spawn_piece()
 
     def get_board_data(self):
+        """
+        Gets the entire board data
+        Returns: 1D list of board data
+        """
         return self._board
 
     def get_datum(self, pos: int):
+        """
+        Gets single datum from the game board
+        Args:
+            pos: Position of datum (note: board data is 1D)
+        Returns: Datum at the position specified
+        """
         return self._board[pos]
 
     def get_board_size(self):
-        return len(self._board) ** (1 / 2)
+        """
+        Returns: The single side size of the game board.
+        """
+        return self._size
