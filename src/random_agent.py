@@ -2,21 +2,27 @@
 
 import random
 
+from agent import Agent
 from board import Board
 
 
-class RandomAgent:
-    def __init__(self):
+class RandomAgent(Agent):
+    def __init__(self, board: Board):
+        super().__init__(board)
         random.seed(None)
 
-    @staticmethod
-    def make_choice(game_board: Board):
+    def play(self):
+        while not self._board.is_terminal():
+            self.make_choice(self._board)
+        return
+
+    def make_choice(self, game_board: Board):
         """
         Makes a random choice on the 2048 game board
         Args:
             game_board: 2048 game board
 
-        Returns:
+        Returns: None
 
         """
         choice = random.choice(range(4))

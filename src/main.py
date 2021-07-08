@@ -1,32 +1,36 @@
 # from tensorforce import Agent
 # from tensorforce.execution import Runner
+import threading
+
 from board import Board
 from board_view import BoardView
+from random_agent import RandomAgent
 
 
-def main():
-    # # Setup
-    # interactive = 0
-    # size = 4
-    # brd = Board(size)
-    # rand_ag = RandomAgent()
-    #
-    # if interactive == 1:
-    #     brd.start_interactive()
-    #
-    # agent = Agent.create(agent='tensorforce', environment=Board, update=64, objective='policy_gradient',
-    #                      reward_estimation=dict(horizon=20))
-    #
-    # runner = Runner(agent=agent, environment=Board, max_episode_timesteps=500)
-    #
-    # runner.run(num_episodes=200)
+def run_random_agent(graphics: bool):
+    """
+
+    Args:
+        graphics: True to enable graphics
+    """
     board = Board()
-    brd_view = BoardView(brd=board)
+    agent = RandomAgent(board)
+    th = threading.Thread(target=RandomAgent.play, args=(agent,))
+    if graphics:
+        brd_view = BoardView(brd=board)
+        brd_view.start()
+    th.start()
+
+
+def run_interactive():
+    board = Board()
+    brd_view = BoardView(brd=board, usr_input=True)
     brd_view.start()
 
 
-# brd.update_graphics()
-
+def main():
+    # run_random_agent(True)
+    run_interactive()
 
 if __name__ == "__main__":
     main()

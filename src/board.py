@@ -39,13 +39,13 @@ class Board:
         """
         moved = False
         prev = 0
-        # TODO: Add scoring
         for i in range(1, len(block)):
             if self._board[block[i]] != 0:
                 # Can combine in direction of swipe
                 if self._board[block[prev]] == self._board[block[i]]:
                     self._board[block[prev]] += 1
                     self._board[block[i]] = 0
+                    self._score += 2 ** self._board[block[prev]]
                     prev += 1
                     moved = True
                 # Can't combine (or zero)
@@ -156,3 +156,6 @@ class Board:
         Returns: The single side size of the game board.
         """
         return self._size
+
+    def get_score(self):
+        return self._score

@@ -1,24 +1,27 @@
 from sys import stderr
-from threading import Thread
 
 from graphics import *
 from pynput import keyboard
 
 from board import *
+# from main import mutex1
+# from main import mutex2
 
 
 class BoardView:
-    def __init__(self, win_size: int = 900, brd: Board = None):
+    def __init__(self, win_size: int = 900, brd: Board = None, usr_input: bool = False):
         """
         Constructor for game visualizer
         Args:
             win_size: Size of the graphics window (default 900)
             brd: Game board to display (default None)
+            usr_input: Determines if the viewer will listen for user input or not
         """
-        self._brd = brd
+        self._board = brd
         self._win_size = win_size
         self._key_listener = None
         self._win = None
+        self._usr_input = usr_input
 
     def _draw_board(self):
         """
@@ -27,16 +30,22 @@ class BoardView:
 
         """
         try:
-            assert (self._brd.get_board_size() > 1)
+            assert (self._board.get_board_size() > 1)
         except AssertionError as e:
             print("Board has non-positive size", file=stderr)
             raise e
-        scale = (self._win_size - 20) / self._brd.get_board_size()
+
+        # mutex1.acquire(blocking=True)
+        # mutex2.acquire(blocking=True)
+        # mutex1.release()
+
+        scale = (self._win_size - 20) / self._board.get_board_size()
         top_left = Point(10, 10)
         bottom_right = Point(self._win_size - 10, self._win_size - 10)
         rect = Rectangle(top_left, bottom_right)
-        for x in range(1, self._brd.get_board_size()):
-            ratio = (self._win_size - 20) / self._brd.get_board_size()
+        ratio = (self._win_size - 20) / self._board.get_board_size()
+        # Draw grid
+        for x in range(1, self._board.get_board_size()):
             # Horizontal line
             hor = Line(Point(10 + ratio * x, 10), Point(10 + ratio * x, self._win_size - 10))
             # Vertical line
@@ -44,22 +53,27 @@ class BoardView:
             hor.draw(self._win)
             vert.draw(self._win)
         rect.draw(self._win)
-        inside_offset = (self._win_size - 20) / (self._brd.get_board_size() * 2)
+        inside_offset = (self._win_size - 20) / (self._board.get_board_size() * 2)
         # Draw background squares and tile numbers
-        for i in range(0, self._brd.get_board_size() ** 2, self._brd.get_board_size()):
-            for j in range(self._brd.get_board_size()):
-                r = Rectangle(Point(10 + j * scale, 10 + (i // self._brd.get_board_size()) * scale),
+        for i in range(0, self._board.get_board_size() ** 2, self._board.get_board_size()):
+            for j in range(self._board.get_board_size()):
+                r = Rectangle(Point(10 + j * scale, 10 + (i // self._board.get_board_size()) * scale),
                               Point(10 + j * scale + 2 * inside_offset,
-                                    10 + (i // self._brd.get_board_size()) * scale + 2 * inside_offset))
-                r.setFill(color_rgb(235, (220 - self._brd.get_datum(i + j) * 14) % 255, 52))
+                                    10 + (i // self._board.get_board_size()) * scale + 2 * inside_offset))
+                r.setFill(color_rgb(235, (220 - self._board.get_datum(i + j) * 14) % 255, 52))
                 r.draw(self._win)
-                if 2 ** self._brd.get_datum(i + j) == 1:
+                # Don't draw tile numbers if they're zero
+                if 2 ** self._board.get_datum(i + j) == 1:
                     continue
                 t = Text(Point(10 + j * scale + inside_offset,
-                               10 + (i // self._brd.get_board_size()) * scale + inside_offset),
-                         2 ** self._brd.get_datum(i + j))
+                               10 + (i // self._board.get_board_size()) * scale + inside_offset),
+                         2 ** self._board.get_datum(i + j))
                 t.setSize(20)
                 t.draw(self._win)
+        score = Text(Point(30, 30), self._board.get_score())
+        score.draw(self._win)
+
+        # mutex2.release()
 
     def update_graphics(self):
         """
@@ -84,16 +98,16 @@ class BoardView:
         try:
             if key == keyboard.Key.right:
                 # swipe right
-                self._brd.swipe_right()
+                self._board.swipe_right()
             elif key == keyboard.Key.left:
                 # swipe left
-                self._brd.swipe_left()
+                self._board.swipe_left()
             elif key == keyboard.Key.up:
                 # swipe up
-                self._brd.swipe_up()
+                self._board.swipe_up()
             elif key == keyboard.Key.down:
                 # swipe down
-                self._brd.swipe_down()
+                self._board.swipe_down()
             else:
                 self._key_listener.stop()
                 self._win.close()
@@ -106,14 +120,21 @@ class BoardView:
         pass
 
     def start(self):
+        if self._board is None:
+            raise ValueError("No game board set")
         self._win = GraphWin("2048 AI", self._win_size, self._win_size, autoflush=False)
-        self._key_listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
-        self._draw_board()
-        self._key_listener.start()
-        # Feels hacky to me but tkinter refuses to not be in the main thread
-        while self._key_listener.running:
-            self.update_graphics()
-            update(15)
+        if self._usr_input:
+            self._key_listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
+            self._draw_board()
+            self._key_listener.start()
+            # Feels hacky to me but tkinter refuses to not be in the main thread
+            while self._key_listener.running:
+                self.update_graphics()
+                update(15)
+        else:
+            while True:
+                self.update_graphics()
+                update(60)
 
     def set_board(self, brd: Board):
-        self._brd = brd
+        self._board = brd
