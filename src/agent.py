@@ -7,7 +7,6 @@ class Agent(ABC):
     def __init__(self, board: Board):
         self._moves = 0
         self._board = board
-        self._score = 0
 
     @abstractmethod
     def play(self):
@@ -18,7 +17,7 @@ class Agent(ABC):
         pass
 
     def get_score(self):
-        return self._score
+        return self._board.get_score()
 
     def get_board(self):
         return self._board

@@ -1,9 +1,10 @@
-# Random agent
-
-import random
+"""
+file: random_agent.py
+copyright: Owen Siljander 2021
+"""
 
 from agent import Agent
-from board import Board
+from board import *
 
 
 class RandomAgent(Agent):
@@ -14,7 +15,6 @@ class RandomAgent(Agent):
     def play(self):
         while not self._board.is_terminal():
             self.make_choice(self._board)
-        return
 
     def make_choice(self, game_board: Board):
         """

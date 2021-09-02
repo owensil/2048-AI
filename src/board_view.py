@@ -1,21 +1,24 @@
+"""
+file: board_view.py
+copyright: Owen Siljander 2021
+"""
+
 from sys import stderr
 
 from graphics import *
 from pynput import keyboard
 
 from board import *
-# from main import mutex1
-# from main import mutex2
 
 
 class BoardView:
-    def __init__(self, win_size: int = 900, brd: Board = None, usr_input: bool = False):
+    def __init__(self, brd: Board = None, usr_input: bool = False, win_size: int = 900):
         """
         Constructor for game visualizer
         Args:
-            win_size: Size of the graphics window (default 900)
             brd: Game board to display (default None)
             usr_input: Determines if the viewer will listen for user input or not
+            win_size: Size of the graphics window (default 900)
         """
         self._board = brd
         self._win_size = win_size
@@ -35,26 +38,21 @@ class BoardView:
             print("Board has non-positive size", file=stderr)
             raise e
 
-        # mutex1.acquire(blocking=True)
-        # mutex2.acquire(blocking=True)
-        # mutex1.release()
-
-        scale = (self._win_size - 20) / self._board.get_board_size()
-        top_left = Point(10, 10)
-        bottom_right = Point(self._win_size - 10, self._win_size - 10)
-        rect = Rectangle(top_left, bottom_right)
-        ratio = (self._win_size - 20) / self._board.get_board_size()
+        # Outline, offset by 10 pixels, could extract offset into a variable but no real point at the moment
+        rect = Rectangle(Point(10, 10), Point(self._win_size - 10, self._win_size - 10))
+        rect.draw(self._win)
         # Draw grid
+        ratio = (self._win_size - 20) / self._board.get_board_size()
         for x in range(1, self._board.get_board_size()):
             # Horizontal line
             hor = Line(Point(10 + ratio * x, 10), Point(10 + ratio * x, self._win_size - 10))
+            hor.draw(self._win)
             # Vertical line
             vert = Line(Point(10, 10 + ratio * x), Point(self._win_size - 10, 10 + ratio * x))
-            hor.draw(self._win)
             vert.draw(self._win)
-        rect.draw(self._win)
-        inside_offset = (self._win_size - 20) / (self._board.get_board_size() * 2)
         # Draw background squares and tile numbers
+        inside_offset = (self._win_size - 20) / (self._board.get_board_size() * 2)
+        scale = (self._win_size - 20) / self._board.get_board_size()
         for i in range(0, self._board.get_board_size() ** 2, self._board.get_board_size()):
             for j in range(self._board.get_board_size()):
                 r = Rectangle(Point(10 + j * scale, 10 + (i // self._board.get_board_size()) * scale),
@@ -73,13 +71,13 @@ class BoardView:
         score = Text(Point(30, 30), self._board.get_score())
         score.draw(self._win)
 
-        # mutex2.release()
-
     def update_graphics(self):
         """
         Used for forcing graphic updates
         Returns: None
         """
+        if self._board is None:
+            raise ValueError("None value for board")
         for item in self._win.items[:]:
             item.undraw()
         self._draw_board()
@@ -120,8 +118,13 @@ class BoardView:
         pass
 
     def start(self):
+        """
+        Display graphics.
+        Returns: None
+
+        """
         if self._board is None:
-            raise ValueError("No game board set")
+            raise ValueError("None value for board")
         self._win = GraphWin("2048 AI", self._win_size, self._win_size, autoflush=False)
         if self._usr_input:
             self._key_listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)

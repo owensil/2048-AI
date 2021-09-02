@@ -1,10 +1,15 @@
+"""
+file: board.py
+copyright: Owen Siljander 2021
+"""
+
 import random
 
 import numpy as np
 
 
 class Board:
-    def __init__(self, size=4):
+    def __init__(self, size: int = 4):
         """
         Initializer for 2048 game board
         Args:
