@@ -9,6 +9,7 @@ from random_agent import RandomAgent
 
 
 class Controller:
+    # ModelView
     def __init__(self):
         self.graphics = False
         self.board = Board()
@@ -28,6 +29,6 @@ class Controller:
 
     def run_interactive(self):
         # Runs the game with user controlled actions
-        brd_view = BoardView(self.board, True)
+        brd_view = BoardView(self.board, usr_input=True)
         brd_view.start()
 

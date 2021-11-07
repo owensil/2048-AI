@@ -63,6 +63,7 @@ def is_terminal(state) -> bool:
             break
     return end
 
+
 def evaluate(state, action):
     """
     Returns the estimated value of a state-action pair

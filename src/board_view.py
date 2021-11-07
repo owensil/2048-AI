@@ -9,6 +9,7 @@ from graphics import *
 from pynput import keyboard
 
 from board import *
+from queue import Queue
 
 
 class BoardView:
@@ -32,18 +33,13 @@ class BoardView:
         Returns: None
 
         """
-        try:
-            assert (self._board.get_board_size() > 1)
-        except AssertionError as e:
-            print("Board has non-positive size", file=stderr)
-            raise e
-
+        brd_size = self._board.get_board_size()
         # Outline, offset by 10 pixels, could extract offset into a variable but no real point at the moment
         rect = Rectangle(Point(10, 10), Point(self._win_size - 10, self._win_size - 10))
         rect.draw(self._win)
         # Draw grid
         ratio = (self._win_size - 20) / self._board.get_board_size()
-        for x in range(1, self._board.get_board_size()):
+        for x in range(1, brd_size):
             # Horizontal line
             hor = Line(Point(10 + ratio * x, 10), Point(10 + ratio * x, self._win_size - 10))
             hor.draw(self._win)
@@ -51,20 +47,20 @@ class BoardView:
             vert = Line(Point(10, 10 + ratio * x), Point(self._win_size - 10, 10 + ratio * x))
             vert.draw(self._win)
         # Draw background squares and tile numbers
-        inside_offset = (self._win_size - 20) / (self._board.get_board_size() * 2)
-        scale = (self._win_size - 20) / self._board.get_board_size()
-        for i in range(0, self._board.get_board_size() ** 2, self._board.get_board_size()):
-            for j in range(self._board.get_board_size()):
-                r = Rectangle(Point(10 + j * scale, 10 + (i // self._board.get_board_size()) * scale),
+        inside_offset = (self._win_size - 20) / (brd_size * 2)
+        scale = (self._win_size - 20) / brd_size
+        for i in range(0, brd_size ** 2, brd_size):
+            for j in range(brd_size):
+                r = Rectangle(Point(10 + j * scale, 10 + (i // brd_size) * scale),
                               Point(10 + j * scale + 2 * inside_offset,
-                                    10 + (i // self._board.get_board_size()) * scale + 2 * inside_offset))
+                                    10 + (i // brd_size) * scale + 2 * inside_offset))
                 r.setFill(color_rgb(235, (220 - self._board.get_datum(i + j) * 14) % 255, 52))
                 r.draw(self._win)
                 # Don't draw tile numbers if they're zero
                 if 2 ** self._board.get_datum(i + j) == 1:
                     continue
                 t = Text(Point(10 + j * scale + inside_offset,
-                               10 + (i // self._board.get_board_size()) * scale + inside_offset),
+                               10 + (i // brd_size) * scale + inside_offset),
                          2 ** self._board.get_datum(i + j))
                 t.setSize(20)
                 t.draw(self._win)
@@ -76,9 +72,7 @@ class BoardView:
         Used for forcing graphic updates
         Returns: None
         """
-        if self._board is None:
-            raise ValueError("None value for board")
-        for item in self._win.items[:]:
+        for item in self._win.items:
             item.undraw()
         self._draw_board()
         self._win.flush()
@@ -107,8 +101,8 @@ class BoardView:
                 # swipe down
                 self._board.swipe_down()
             else:
-                self._key_listener.stop()
-                self._win.close()
+                return False
+            self.update_graphics()
         except AttributeError as e:
             self._key_listener.stop()
             self._win.close()
@@ -123,21 +117,13 @@ class BoardView:
         Returns: None
 
         """
-        if self._board is None:
-            raise ValueError("None value for board")
         self._win = GraphWin("2048 AI", self._win_size, self._win_size, autoflush=False)
+        self._win.create_window()
         if self._usr_input:
-            self._key_listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
-            self._draw_board()
-            self._key_listener.start()
-            # Feels hacky to me but tkinter refuses to not be in the main thread
-            while self._key_listener.running:
-                self.update_graphics()
-                update(15)
+            listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
+            listener.start()
+
         else:
             while True:
                 self.update_graphics()
                 update(60)
-
-    def set_board(self, brd: Board):
-        self._board = brd
