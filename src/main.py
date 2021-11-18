@@ -9,8 +9,9 @@ from controller import Controller
 
 def main():
     c = Controller()
-    c.run_interactive()
+    c.run_dl_agent_graphics()
 
 
 if __name__ == "__main__":
     main()
+

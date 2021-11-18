@@ -3,8 +3,6 @@ file: board_view.py
 copyright: Owen Siljander 2021
 """
 
-from sys import stderr
-
 from graphics import *
 from pynput import keyboard
 
@@ -77,53 +75,21 @@ class BoardView:
         self._draw_board()
         self._win.flush()
 
-    def _on_press(self, key):
+    def start(self, ctr):
         """
-        Event handler for keyboard. Used in interactive mode
+        Starts graphics display.
         Args:
-            key: Key that has been pressed
+            ctr: Calling controller object
 
         Returns: Nothing
 
         """
-        print("On press called")
-        try:
-            if key == keyboard.Key.right:
-                # swipe right
-                self._board.swipe_right()
-            elif key == keyboard.Key.left:
-                # swipe left
-                self._board.swipe_left()
-            elif key == keyboard.Key.up:
-                # swipe up
-                self._board.swipe_up()
-            elif key == keyboard.Key.down:
-                # swipe down
-                self._board.swipe_down()
-            else:
-                return False
-            self.update_graphics()
-        except AttributeError as e:
-            self._key_listener.stop()
-            self._win.close()
-            raise e
-
-    def _on_release(self, key):
-        pass
-
-    def start(self):
-        """
-        Display graphics.
-        Returns: None
-
-        """
-        self._win = GraphWin("2048 AI", self._win_size, self._win_size, autoflush=False)
-        self._win.create_window()
+        self._win = GraphWin(title="2048 AI", width=self._win_size, height=self._win_size, autoflush=False)
         if self._usr_input:
-            listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
+            listener = keyboard.Listener(on_press=ctr.consume_key, on_release=None)
             listener.start()
-
-        else:
-            while True:
-                self.update_graphics()
-                update(60)
+        while self._win.isOpen():
+            self.update_graphics()
+            update(15)
+            if ctr.event is not None:
+                ctr.event.set()

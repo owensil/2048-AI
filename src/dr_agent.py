@@ -1,5 +1,5 @@
 """
-file: random_agent.py
+file: dr_agent.py
 copyright: Owen Siljander 2021
 """
 
@@ -8,24 +8,23 @@ from board import *
 from threading import Event
 
 
-class RandomAgent(Agent):
+class DRAgent(Agent):
     """
-    Agent that makes uniformly random moves.
+    Down-Right spamming agent.
     """
     def __init__(self, board: Board):
         super().__init__(board)
         random.seed(None)
 
     def _make_choice(self):
-        choice = random.choice(range(4))
-        if choice == 0:
-            self._board.swipe_left()
-        elif choice == 1:
-            self._board.swipe_right()
-        elif choice == 2:
-            self._board.swipe_up()
-        elif choice == 3:
-            self._board.swipe_down()
+        moved = False
+        direction = [self._board.swipe_down, self._board.swipe_right, self._board.swipe_left, self._board.swipe_up]
+        # Priority move order of D-R-L-U
+        # Make each choice until we have moved
+        for i in range(4):
+            moved = direction[i]()
+            if moved:
+                break
 
     def play(self):
         while not self._board.is_terminal():
