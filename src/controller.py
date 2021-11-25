@@ -32,33 +32,25 @@ class Controller:
             elif key == keyboard.Key.down:
                 # swipe down
                 self._board.swipe_down()
+            elif key == keyboard.Key.esc:
+                # quit/kill thread
+                exit(0)
         except AttributeError as e:
             # Ignore exceptions since they *should* only be caused by a user
             pass
 
-    def run_dl_agent_graphics(self):
-        agent = DRAgent(self._board)
-        self.event = Event()
-        Thread(target=agent.play_graphics, args=[self.event]).start()
-        brd_view = BoardView(brd=self._board)
-        brd_view.start(self)
-
-    def run_dl_agent(self):
-        agent = DRAgent(self._board)
-        agent.play()
-
-    def run_random_agent_graphics(self):
-        # Runs the random agent with graphics
-        agent = RandomAgent(self._board)
-        self.event = Event()
-        Thread(target=agent.play_graphics, args=[self.event]).start()
-        brd_view = BoardView(brd=self._board)
-        brd_view.start(self)
-
-    def run_random_agent(self):
-        # Runs the random agent
-        agent = RandomAgent(self._board)
-        agent.play()
+    def run_agent(self, agent_type, graphics=False):
+        agent = None
+        if agent_type == 'DRAgent':
+            agent = DRAgent(self._board)
+        elif agent_type == 'Random':
+            agent = RandomAgent(self._board)
+        if graphics:
+            self.event = Event()
+            Thread(target=agent.play_graphics, args=[self.event]).start()
+            BoardView(brd=self._board).start(self)
+        else:
+            agent.play()
 
     def run_interactive(self):
         # Runs the game with user controlled actions

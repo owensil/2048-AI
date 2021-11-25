@@ -55,6 +55,7 @@ class Board:
                     moved = True
                 # Can't combine (or zero)
                 elif self._board[block[prev]] != self._board[block[i]]:
+                    # TODO: Can probably make this an else
                     # Zero
                     if self._board[block[prev]] != 0:
                         prev += 1
@@ -164,3 +165,65 @@ class Board:
 
     def get_score(self):
         return self._score
+
+
+"""
+===== Fragment from previous structure =====
+
+    def evaluate(self, state, action):
+        return np.matmul(self._val_funcs[action], state)
+
+    @staticmethod
+    def compute_afterstate(state, action):
+        s_prime = deepcopy(state)
+        if action == 0:
+            Board._swipe_left(s_prime)
+        elif action == 1:
+            Board._swipe_right(s_prime)
+        elif action == 2:
+            Board._swipe_up(s_prime)
+        elif action == 3:
+            Board._swipe_down(s_prime)
+        else:
+            raise ValueError("Incorrect move")
+
+    @staticmethod
+    def make_move(state, action):
+        s_prime, reward = Board.compute_afterstate(state, action)
+        s_dprime = Board._spawn_piece(s_prime)
+        return reward, s_prime, s_dprime
+
+    def learn_evaluation(self, state, action, reward, s_prime, s_dprime):
+        v_next = None
+        max = -inf
+        for i in [0, 1, 2, 3]:
+            pass
+
+    def play_game(self):
+        learning_enabled = True
+        score = 0
+        # Init
+        state = np.zeros(16)
+        Board._spawn_piece(state)
+        # While not terminal
+        while not Board.is_terminal(state):
+            # argmax
+            max_val = -inf
+            action = -1
+            for i in [0, 1, 2, 3]:
+                ret = self.evaluate(state, i)
+                if ret > max_val:
+                    max_val = ret
+                    action = i
+            # Make move
+            assert action != -1
+            reward, s_prime, s_dprime = Board.make_move(state, action)
+            if learning_enabled:
+                Board.learn_evaluation(state, action, reward, s_prime, s_dprime)
+            score += reward
+            state = s_dprime
+        return score
+
+
+
+"""

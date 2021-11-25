@@ -65,10 +65,17 @@ class BoardView:
         score = Text(Point(30, 30), self._board.get_score())
         score.draw(self._win)
 
+    def _run_with_agent(self, ctr):
+        assert ctr.event is not None
+        while self._win.isOpen():
+            self.update_graphics()
+            update(15)
+            ctr.event.set()
+
     def update_graphics(self):
         """
-        Used for forcing graphic updates
-        Returns: None
+        Updates graphics
+        Returns: Nothing
         """
         for item in self._win.items:
             item.undraw()
@@ -84,12 +91,17 @@ class BoardView:
         Returns: Nothing
 
         """
+        assert ctr is not None
         self._win = GraphWin(title="2048 AI", width=self._win_size, height=self._win_size, autoflush=False)
-        if self._usr_input:
-            listener = keyboard.Listener(on_press=ctr.consume_key, on_release=None)
-            listener.start()
-        while self._win.isOpen():
+        if not self._usr_input:
+            self._run_with_agent(ctr)
+            return
+        listener = keyboard.Listener(on_press=ctr.consume_key, on_release=None)
+        listener.start()
+        while self._win.isOpen() and listener.running:
             self.update_graphics()
             update(15)
-            if ctr.event is not None:
-                ctr.event.set()
+        if self._win.isOpen():
+            self._win.close()
+        if listener.running:
+            listener.stop()

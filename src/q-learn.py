@@ -49,21 +49,6 @@ def setup(parametrize=False):
                 model.compile(optimizer='SGD', loss=tf.keras.losses.Hinge(), metrics=['accuracy'])
 
 
-def is_terminal(state) -> bool:
-    """
-    Checks if game has ended. Pure function.
-    Returns: bool indicating whether or not game has ended.
-    """
-    end = True
-    for i in range(SIZE ** 2):
-        end = not ((state[i] == 0) or (
-                (i + 1) % SIZE != 0 and state[i] == state[i + 1]) or (
-                           i + SIZE < SIZE ** 2 and state[i] == state[i + SIZE]))
-        if end is False:
-            break
-    return end
-
-
 def evaluate(state, action):
     """
     Returns the estimated value of a state-action pair
